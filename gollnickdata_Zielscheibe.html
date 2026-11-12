@@ -1,0 +1,565 @@
+<!DOCTYPE html>
+<html lang="de" data-thema="tag">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>gollnickdata Zielscheibe — Vorbereitung für Kundentermine</title>
+<style>
+:root{
+  /* Markenfarben laut gollnickdata Styleguide — in beiden Ansichten unveraendert */
+  --blau:#3967DE; --navy:#2C2C54; --weiss:#ffffff;
+  /* Sekundärfarben, nur zur Unterscheidung der vier Felder */
+  --indigo:#6C5CE7; --amber:#E8A33D; --teal:#1FA6A0;
+  font-synthesis-weight:none;
+}
+
+/* -------------------------------------------------------- Tagansicht */
+:root,
+:root[data-thema="tag"]{
+  color-scheme:light;
+  --bg:#f4f5f8;
+  --flaeche:#ffffff;
+  --kopf-bg:#2C2C54;
+  --rand:#dde1ea;
+  --linie:#c4c9d6;
+  --achse:#2C2C54;
+  --text:#2C2C54;
+  --text-mute:#5a6072;
+  --text-dim:#9298a8;
+  --ring-deck:.5;
+}
+
+/* ------------------------------------------------------ Nachtansicht */
+/* Der Styleguide erlaubt auf dem dunklen Navy ausdruecklich Weiss oder Blau.
+   Die Nachtansicht nutzt genau diese Kombination. */
+:root[data-thema="nacht"]{
+  color-scheme:dark;
+  --bg:#1b1b36;
+  --flaeche:#2C2C54;
+  --kopf-bg:#141429;
+  --rand:#3d3d63;
+  --linie:#4d4d73;
+  --achse:#8f8fb0;
+  --text:#ffffff;
+  --text-mute:#c0c0d8;
+  --text-dim:#8080a0;
+  --ring-deck:.42;
+}
+
+*{box-sizing:border-box}
+html,body{margin:0}
+body{
+  /* Arial ist die Hausschrift der gollnickdata-Decks; Arial kennt nur Regular und
+     Bold — deshalb ausschliesslich 400 und 700. */
+  font-family:Arial,Helvetica,sans-serif;
+  font-weight:400;
+  background:var(--bg);color:var(--text);
+  -webkit-font-smoothing:antialiased;
+  transition:background .18s,color .18s;
+}
+
+/* ----------------------------------------------------------------- Kopf */
+header{
+  position:relative;background:var(--kopf-bg);color:var(--weiss);
+  padding:16px 104px 14px 22px;
+}
+/* Die beiden Sinnbild-Knoepfe oben rechts: Werkzeuge und Tag/Nacht.
+   Laut Styleguide nur Linien-Sinnbilder in Blau, klein und ohne Kontur. */
+.kopf-knoepfe{position:absolute;top:14px;right:18px;display:flex;gap:8px}
+.kopf-knopf{
+  width:34px;height:34px;padding:0;display:grid;place-items:center;
+  background:transparent;border:1px solid rgba(255,255,255,.2);border-radius:3px;
+  color:var(--blau);cursor:pointer;transition:border-color .12s,background .12s;
+}
+.kopf-knopf:hover{border-color:var(--blau)}
+.kopf-knopf:focus-visible{outline:2px solid var(--blau);outline-offset:2px}
+/* Aufgeklappte Werkzeuge: der Knopf bleibt sichtbar markiert, damit erkennbar
+   ist, warum die Leiste da ist — und wo man sie wieder zumacht. */
+.kopf-knopf[aria-expanded="true"]{border-color:var(--blau);background:rgba(57,103,222,.22)}
+.sinnbild{
+  width:18px;height:18px;fill:none;stroke:currentColor;
+  stroke-width:1.6;stroke-linecap:round;stroke-linejoin:round;
+}
+/* Gezeigt wird stets die Ansicht, in die geschaltet wird. */
+:root:not([data-thema="nacht"]) .sonne{display:none}
+:root[data-thema="nacht"] .mond{display:none}
+.kopfzeile{display:flex;align-items:baseline;gap:14px;flex-wrap:wrap}
+.marke{font-weight:700;font-size:19px;letter-spacing:1px;color:var(--weiss)}
+h1{font-size:19px;margin:0;font-weight:700;letter-spacing:-.2px;color:var(--blau)}
+
+/* ----------------------------------------------------------- Werkzeuge */
+/* Die Leiste ist standardmaessig aus und wird ueber das Zahnrad eingeblendet.
+   Grund: Die Zielscheibe laeuft auch im Kundenworkshop, und dort hat der
+   Export in Richtung Prompt nichts zu suchen. */
+.werkbank{
+  display:none;align-items:center;gap:7px;flex-wrap:wrap;
+  padding:11px 22px;background:var(--flaeche);border-bottom:1px solid var(--rand);
+  position:sticky;top:0;z-index:30;
+}
+:root[data-werkzeuge="an"] .werkbank{display:flex}
+:root:not([data-werkzeuge="an"]) .nur-werkzeuge{display:none !important}
+.knopf{
+  font:inherit;font-size:12.5px;font-weight:400;padding:6px 12px;
+  border:1px solid var(--rand);background:var(--flaeche);border-radius:3px;
+  cursor:pointer;color:var(--text-mute);white-space:nowrap;
+  transition:border-color .12s,color .12s,background .12s;
+}
+.knopf:hover{border-color:var(--blau);color:var(--text)}
+.knopf:focus-visible{outline:2px solid var(--blau);outline-offset:2px}
+/* Auf Blau steht laut Styleguide immer weisser Text */
+.knopf.haupt{background:var(--blau);border-color:var(--blau);color:var(--weiss);font-weight:700}
+.knopf.haupt:hover{background:#5a82e8;border-color:#5a82e8;color:var(--weiss)}
+.trenner{width:1px;height:20px;background:var(--rand);margin:0 4px}
+.wb-fuell{flex:1 1 auto}
+.wb-status{font-size:11.5px;color:var(--text-dim);white-space:nowrap}
+
+/* -------------------------------------------------------------- Fläche */
+main{padding:22px;max-width:1180px;margin:0 auto}
+
+.anlasszeile{display:flex;gap:16px;flex-wrap:wrap;margin-bottom:16px}
+.anlassfeld{flex:1 1 260px;min-width:0}
+.anlassfeld label{
+  display:block;font-size:10px;font-weight:700;text-transform:uppercase;
+  letter-spacing:1.2px;color:var(--text-dim);margin-bottom:5px;
+}
+.anlassfeld input{
+  width:100%;font:inherit;font-size:14px;padding:8px 11px;
+  border:1px solid var(--rand);border-radius:3px;background:var(--flaeche);color:var(--text);
+}
+.anlassfeld input:focus{outline:none;border-color:var(--blau)}
+
+/* ------------------------------------------------------------- Scheibe */
+.scheibe{
+  position:relative;background:var(--flaeche);border:1px solid var(--rand);
+  border-radius:5px;padding:26px;
+  display:grid;grid-template-columns:1fr 1fr;
+}
+/* Achsenkreuz */
+.achse-v,.achse-h{position:absolute;background:var(--achse);z-index:1}
+.achse-v{left:50%;top:26px;bottom:26px;width:1px}
+.achse-h{top:50%;left:26px;right:26px;height:1px}
+/* Gestrichelter Ring wie auf der Papiervorlage */
+.ring{
+  position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);
+  width:min(78%,640px);aspect-ratio:1/1;
+  border:2px dashed var(--blau);border-radius:50%;
+  opacity:var(--ring-deck);z-index:0;pointer-events:none;
+}
+
+.feld{position:relative;z-index:2;padding:4px 22px}
+.feld.oben{padding-bottom:68px}
+.feld.unten{padding-top:68px}
+.feld.rechts{text-align:right}
+
+.feld-name{font-size:13px;font-weight:700;letter-spacing:.2px;color:var(--text);text-transform:uppercase}
+.feld-balken{height:3px;width:34px;margin:6px 0 8px;border-radius:2px}
+.feld.rechts .feld-balken{margin-left:auto}
+/* Die Leitfragen sind unterschiedlich lang. Zwei Zeilen Mindesthoehe halten die
+   Schreiblinien der linken und rechten Haelfte auf gleicher Hoehe. */
+.feld-frage{
+  font-size:12px;color:var(--text-mute);line-height:1.45;
+  min-height:2.9em;margin-bottom:12px;max-width:34ch;
+}
+.feld.rechts .feld-frage{margin-left:auto}
+
+.zeilen{display:flex;flex-direction:column;gap:9px}
+.zeilen input{
+  width:100%;font:inherit;font-size:13.5px;padding:3px 2px;
+  border:0;border-bottom:1px solid var(--linie);background:transparent;color:var(--text);
+}
+.zeilen input:focus{outline:none;border-bottom-color:var(--blau);border-bottom-width:2px;padding-bottom:2px}
+
+/* Mitte */
+.mitte{
+  position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);
+  z-index:3;width:176px;height:176px;border-radius:50%;
+  background:var(--flaeche);border:2px solid var(--blau);
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  padding:16px;text-align:center;
+}
+.mitte-name{
+  font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:1.4px;
+  color:var(--text);margin-bottom:7px;
+}
+/* Das Ziel in der Mitte wird nicht getippt, sondern ergibt sich aus den vier
+   Feldern. Das Feld zeigt einen geladenen Stand an, nimmt aber keine Eingabe. */
+.mitte textarea{
+  width:100%;font:inherit;font-size:12px;line-height:1.35;resize:none;
+  border:0;background:transparent;color:var(--text);text-align:center;height:66px;
+  cursor:default;caret-color:transparent;
+}
+.mitte textarea:focus{outline:none}
+
+
+
+/* Notbehelf, falls die Zwischenablage gesperrt ist */
+.abschrift{
+  position:fixed;top:8%;left:50%;transform:translateX(-50%);
+  width:min(680px,90vw);height:56vh;z-index:99;font:inherit;font-size:13px;
+  padding:14px;border:2px solid var(--blau);border-radius:4px;
+  background:var(--flaeche);color:var(--text);
+}
+
+@media (max-width:820px){
+  .scheibe{grid-template-columns:1fr;padding:18px}
+  .achse-v,.achse-h,.ring{display:none}
+  .feld{padding:16px 0;border-bottom:1px solid var(--rand)}
+  .feld.oben,.feld.unten{padding-top:16px;padding-bottom:16px}
+  .feld-frage{min-height:0}
+  .feld.rechts{text-align:left}
+  .feld.rechts .feld-balken,.feld.rechts .feld-frage{margin-left:0}
+  .mitte{position:static;transform:none;width:100%;height:auto;border-radius:5px;margin-top:16px}
+  .mitte textarea{height:58px}
+}
+
+/* --------------------------------------------------------------- Druck */
+/* Gedruckt wird immer hell — unabhaengig von der Bildschirmansicht. */
+@media print{
+  @page{size:A4 portrait;margin:12mm}
+  .werkbank,.abschrift,.kopf-knoepfe{display:none !important}
+  html,body{background:#fff;color:#2C2C54}
+  header{background:#fff;color:#2C2C54;padding:0 0 5mm;border-bottom:1px solid #ccc}
+  .marke,h1{color:#2C2C54}
+  main{padding:5mm 0 0;max-width:none}
+  .scheibe{background:#fff;border:1px solid #999;padding:6mm;break-inside:avoid}
+  .ring{border-color:#999;opacity:.6}
+  .achse-v,.achse-h{background:#333}
+  .mitte{background:#fff;border-color:#333}
+  .mitte-name,.feld-name,.zeilen input,.mitte textarea{color:#2C2C54}
+  .feld-frage{color:#555}
+  .zeilen input{border-bottom-color:#aaa}
+  .anlassfeld input{background:#fff;border-color:#bbb;color:#2C2C54}
+  .anlassfeld label{color:#666}
+}
+</style>
+<script>
+/* Fruehstart: Ansicht festlegen, bevor die Seite gezeichnet wird — sonst blitzt
+   die Nachtansicht beim Laden kurz hell auf. */
+(function(){
+  var g = null;
+  try{ g = localStorage.getItem("gollnickdata.zielscheibe.thema"); }catch(e){}
+  if(g !== "tag" && g !== "nacht"){
+    g = (window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches)
+      ? "nacht" : "tag";
+  }
+  document.documentElement.dataset.thema = g;
+})();
+</script>
+</head>
+<body>
+
+<header>
+  <div class="kopfzeile">
+    <span class="marke">gollnickdata</span>
+    <h1>Zielscheibe</h1>
+  </div>
+  <div class="kopf-knoepfe">
+    <button class="kopf-knopf" id="wbWerkzeuge" type="button"
+            aria-expanded="false" aria-controls="werkbank"
+            aria-label="Werkzeuge einblenden" title="Werkzeuge einblenden (Taste W)">
+      <svg class="sinnbild" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+        <circle cx="12" cy="12" r="3"/>
+        <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1Z"/>
+      </svg>
+    </button>
+    <button class="kopf-knopf" id="wbThema" type="button" aria-pressed="false"
+            aria-label="Nachtansicht einschalten" title="Nachtansicht einschalten (Taste D)">
+      <svg class="sinnbild sonne" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+        <circle cx="12" cy="12" r="4.2"/>
+        <path d="M12 2.4v2.5M12 19.1v2.5M2.4 12h2.5M19.1 12h2.5M5 5l1.8 1.8M17.2 17.2 19 19M19 5l-1.8 1.8M6.8 17.2 5 19"/>
+      </svg>
+      <svg class="sinnbild mond" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+        <path d="M20.4 14.2A8.6 8.6 0 0 1 9.8 3.6 8.6 8.6 0 1 0 20.4 14.2Z"/>
+      </svg>
+    </button>
+  </div>
+</header>
+
+<div class="werkbank" id="werkbank">
+  <button class="knopf haupt" id="wbPrompt" title="Die vier Felder als Textblock für den KI-Arbeitsvertrag kopieren">KI-Arbeitsvertrag</button>
+  <span class="trenner"></span>
+  <button class="knopf" id="wbDruck" title="Leer oder ausgefüllt auf A4 drucken">Drucken</button>
+  <button class="knopf" id="wbSichern" title="Stand als JSON sichern">Sichern</button>
+  <button class="knopf" id="wbLaden" title="Gesicherten Stand laden">Laden</button>
+  <span class="trenner"></span>
+  <button class="knopf" id="wbLeeren" title="Alle Eingaben verwerfen">Leeren</button>
+  <span class="wb-fuell"></span>
+  <span class="wb-status" id="wbStatus"></span>
+  <input type="file" id="wbDatei" accept="application/json" hidden>
+</div>
+
+<main>
+  <div class="anlasszeile">
+    <div class="anlassfeld">
+      <label for="anlass">Termin / Anlass</label>
+      <input type="text" id="anlass" autocomplete="off">
+    </div>
+    <div class="anlassfeld">
+      <label for="datum">Datum</label>
+      <input type="text" id="datum" autocomplete="off">
+    </div>
+  </div>
+
+  <div class="scheibe">
+    <div class="ring"></div>
+    <div class="achse-v"></div>
+    <div class="achse-h"></div>
+
+    <div class="feld oben links" data-feld="zweck">
+      <div class="feld-name">Zweck</div>
+      <div class="feld-balken" style="background:var(--blau)"></div>
+      <div class="feld-frage">Warum machen wir das? (um zu …)</div>
+      <div class="zeilen"></div>
+    </div>
+
+    <div class="feld oben rechts" data-feld="beteiligte">
+      <div class="feld-name">Kunde / Beteiligte</div>
+      <div class="feld-balken" style="background:var(--indigo)"></div>
+      <div class="feld-frage">Für wen machen wir das?</div>
+      <div class="zeilen"></div>
+    </div>
+
+    <div class="feld unten links" data-feld="ergebnis">
+      <div class="feld-name">Ergebnis</div>
+      <div class="feld-balken" style="background:var(--teal)"></div>
+      <div class="feld-frage">Was müssen wir in der verfügbaren Zeit erreichen?</div>
+      <div class="zeilen"></div>
+    </div>
+
+    <div class="feld unten rechts" data-feld="kriterien">
+      <div class="feld-name">Kriterien</div>
+      <div class="feld-balken" style="background:var(--amber)"></div>
+      <div class="feld-frage">Woran wird das Ergebnis gemessen?</div>
+      <div class="zeilen"></div>
+    </div>
+
+    <div class="mitte">
+      <div class="mitte-name">Ziel</div>
+      <textarea id="ziel" rows="3" aria-label="Ziel" readonly></textarea>
+    </div>
+  </div>
+</main>
+
+<script>
+"use strict";
+
+const FELDER = ["zweck","beteiligte","ergebnis","kriterien"];
+const BESCHRIFTUNG = {
+  zweck:      ["Zweck","Warum machen wir das? (um zu …)"],
+  beteiligte: ["Kunde / Beteiligte","Für wen machen wir das?"],
+  ergebnis:   ["Ergebnis","Was müssen wir in der verfügbaren Zeit erreichen?"],
+  kriterien:  ["Kriterien","Woran wird das Ergebnis gemessen?"]
+};
+const ZEILEN_JE_FELD = 5;
+const SPEICHER = "gollnickdata.zielscheibe.v1";
+const SPEICHER_THEMA = "gollnickdata.zielscheibe.thema";
+
+/* ----------------------------------------------------- Tag und Nacht */
+/* Beim ersten Aufruf richtet sich die Ansicht nach der Systemeinstellung;
+   eine eigene Wahl wird gemerkt und hat danach Vorrang. */
+function setzeThema(thema, merken){
+  const nacht = thema === "nacht";
+  document.documentElement.dataset.thema = nacht ? "nacht" : "tag";
+  const knopf = document.getElementById("wbThema");
+  const benennung = nacht ? "Tagansicht einschalten" : "Nachtansicht einschalten";
+  knopf.setAttribute("aria-pressed", String(nacht));
+  knopf.setAttribute("aria-label", benennung);
+  knopf.title = benennung + " (Taste D)";
+  if(merken){
+    try{ localStorage.setItem(SPEICHER_THEMA, nacht ? "nacht" : "tag"); }catch(e){}
+  }
+}
+
+/* Der Fruehstart im <head> hat die Ansicht bereits gesetzt — hier nur der Knopf. */
+setzeThema(document.documentElement.dataset.thema === "nacht" ? "nacht" : "tag", false);
+
+document.getElementById("wbThema").addEventListener("click", () => {
+  const nachtJetzt = document.documentElement.dataset.thema === "nacht";
+  setzeThema(nachtJetzt ? "tag" : "nacht", true);
+});
+
+/* ----------------------------------------------------------- Werkzeuge */
+/* Die Leiste mit Export, Drucken, Sichern, Laden und Leeren haengt am Zahnrad
+   und ist bei jedem Aufruf zunaechst aus. Bewusst ohne Gedaechtnis: Die Datei
+   soll auch dann unverfaenglich aufgehen, wenn sie zuletzt intern benutzt
+   wurde und jetzt im Kundentermin am Beamer haengt. */
+function setzeWerkzeuge(an){
+  const knopf = document.getElementById("wbWerkzeuge");
+  if(an) document.documentElement.dataset.werkzeuge = "an";
+  else   delete document.documentElement.dataset.werkzeuge;
+  const benennung = an ? "Werkzeuge ausblenden" : "Werkzeuge einblenden";
+  knopf.setAttribute("aria-expanded", String(an));
+  knopf.setAttribute("aria-label", benennung);
+  knopf.title = benennung + " (Taste W)";
+}
+
+setzeWerkzeuge(false);
+
+document.getElementById("wbWerkzeuge").addEventListener("click", () => {
+  setzeWerkzeuge(document.documentElement.dataset.werkzeuge !== "an");
+});
+
+document.addEventListener("keydown", ev => {
+  if(ev.ctrlKey || ev.altKey || ev.metaKey) return;
+  if(/^(INPUT|TEXTAREA)$/.test(ev.target.tagName)) return;
+  if(ev.key === "d" || ev.key === "D") document.getElementById("wbThema").click();
+  if(ev.key === "w" || ev.key === "W") document.getElementById("wbWerkzeuge").click();
+});
+
+/* --------------------------------------------------------------- Aufbau */
+FELDER.forEach(name => {
+  const behaelter = document.querySelector('.feld[data-feld="' + name + '"] .zeilen');
+  for(let i = 0; i < ZEILEN_JE_FELD; i++){
+    const e = document.createElement("input");
+    e.type = "text";
+    e.autocomplete = "off";
+    e.dataset.feld = name;
+    e.dataset.nr = String(i);
+    e.setAttribute("aria-label", BESCHRIFTUNG[name][0] + ", Zeile " + (i + 1));
+    behaelter.appendChild(e);
+  }
+});
+
+const alleEingaben = () => Array.from(document.querySelectorAll(".zeilen input"));
+
+/* ---------------------------------------------------------------- Stand */
+function lies(){
+  const stand = {anlass:"", datum:"", ziel:"", felder:{}};
+  stand.anlass = document.getElementById("anlass").value.trim();
+  stand.datum  = document.getElementById("datum").value.trim();
+  stand.ziel   = document.getElementById("ziel").value.trim();
+  FELDER.forEach(n => { stand.felder[n] = new Array(ZEILEN_JE_FELD).fill(""); });
+  alleEingaben().forEach(e => {
+    stand.felder[e.dataset.feld][Number(e.dataset.nr)] = e.value.trim();
+  });
+  return stand;
+}
+
+function schreib(stand){
+  if(!stand) return;
+  document.getElementById("anlass").value = stand.anlass || "";
+  document.getElementById("datum").value  = stand.datum  || "";
+  document.getElementById("ziel").value   = stand.ziel   || "";
+  alleEingaben().forEach(e => {
+    const werte = (stand.felder && stand.felder[e.dataset.feld]) || [];
+    e.value = werte[Number(e.dataset.nr)] || "";
+  });
+}
+
+function merke(){
+  try{ localStorage.setItem(SPEICHER, JSON.stringify(lies())); }
+  catch(e){ /* privater Modus oder Speicher gesperrt */ }
+}
+function hole(){
+  try{
+    const roh = localStorage.getItem(SPEICHER);
+    return roh ? JSON.parse(roh) : null;
+  }catch(e){ return null; }
+}
+
+document.addEventListener("input", ev => {
+  if(ev.target.matches("input, textarea")) merke();
+});
+
+/* -------------------------------------------------------------- Meldung */
+let meldeUhr = null;
+function status(text){
+  const el = document.getElementById("wbStatus");
+  el.textContent = text;
+  clearTimeout(meldeUhr);
+  meldeUhr = setTimeout(() => { el.textContent = ""; }, 3200);
+}
+
+/* --------------------------------------------------- Ausgabe als Prompt */
+function promptText(){
+  const s = lies();
+  const zeilen = ["## Empfängerkontext (Zielscheibe)", ""];
+  if(s.anlass) zeilen.push("**Anlass:** " + s.anlass);
+  if(s.datum)  zeilen.push("**Datum:** " + s.datum);
+  if(s.ziel)   zeilen.push("**Ziel:** " + s.ziel);
+  if(s.anlass || s.datum || s.ziel) zeilen.push("");
+  FELDER.forEach(n => {
+    const werte = (s.felder[n] || []).filter(Boolean);
+    if(!werte.length) return;
+    zeilen.push("**" + BESCHRIFTUNG[n][0] + "** — " + BESCHRIFTUNG[n][1]);
+    werte.forEach(w => zeilen.push("- " + w));
+    zeilen.push("");
+  });
+  return zeilen.join("\n").trim();
+}
+
+function istLeer(){
+  const s = lies();
+  if(s.anlass || s.datum || s.ziel) return false;
+  return !FELDER.some(n => (s.felder[n] || []).some(Boolean));
+}
+
+document.getElementById("wbPrompt").addEventListener("click", async () => {
+  if(istLeer()){ status("Noch nichts ausgefüllt"); return; }
+  const text = promptText();
+  try{
+    await navigator.clipboard.writeText(text);
+    status("In die Zwischenablage kopiert");
+  }catch(e){
+    /* Ohne Zwischenablage-Recht: Text markiert zum Kopieren anbieten */
+    const f = document.createElement("textarea");
+    f.className = "abschrift";
+    f.value = text;
+    document.body.appendChild(f);
+    f.focus();
+    f.select();
+    status("Mit Strg+C kopieren, dann Esc");
+    f.addEventListener("keydown", k => { if(k.key === "Escape") f.remove(); });
+  }
+});
+
+/* ----------------------------------------------------- Sichern / Laden */
+document.getElementById("wbSichern").addEventListener("click", () => {
+  const s = lies();
+  const kennung = (s.anlass || "").replace(/[^\wÄÖÜäöüß -]/g, "").trim().replace(/\s+/g, "_");
+  const blob = new Blob([JSON.stringify(s, null, 2)], {type:"application/json"});
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(blob);
+  a.download = "gollnickdata_Zielscheibe_" + (kennung || "ohne_Titel") + ".json";
+  a.click();
+  URL.revokeObjectURL(a.href);
+  status("Gesichert");
+});
+
+document.getElementById("wbLaden").addEventListener("click", () => {
+  document.getElementById("wbDatei").click();
+});
+document.getElementById("wbDatei").addEventListener("change", ev => {
+  const datei = ev.target.files && ev.target.files[0];
+  if(!datei) return;
+  const leser = new FileReader();
+  leser.onload = () => {
+    try{
+      schreib(JSON.parse(leser.result));
+      merke();
+      status("Geladen");
+    }catch(e){ status("Datei nicht lesbar"); }
+  };
+  leser.readAsText(datei);
+  ev.target.value = "";
+});
+
+/* ----------------------------------------------------------- Werkzeuge */
+document.getElementById("wbDruck").addEventListener("click", () => window.print());
+
+document.getElementById("wbLeeren").addEventListener("click", () => {
+  if(!confirm("Alle Eingaben dieser Zielscheibe verwerfen?")) return;
+  schreib({anlass:"", datum:"", ziel:"", felder:{}});
+  merke();
+  status("Geleert");
+});
+
+/* ---------------------------------------------------------------- Start */
+const vorhanden = hole();
+if(vorhanden){
+  schreib(vorhanden);
+  status("Vorheriger Stand wiederhergestellt");
+}
+</script>
+</body>
+</html>
