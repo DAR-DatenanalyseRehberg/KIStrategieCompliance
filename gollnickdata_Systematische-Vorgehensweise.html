@@ -1,0 +1,765 @@
+<!DOCTYPE html>
+<html lang="de" data-thema="tag">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>gollnickdata Systematische Vorgehensweise</title>
+<style>
+:root{
+  /* Markenfarben laut gollnickdata Styleguide — in beiden Ansichten unveraendert */
+  --blau:#3967DE; --navy:#2C2C54; --weiss:#ffffff;
+  /* Sekundärfarben, nur zur Unterscheidung der Schrittgruppen */
+  --indigo:#7C8FE8; --amber:#F2C14E; --teal:#3FC79A;
+  font-synthesis-weight:none;
+}
+
+/* -------------------------------------------------------- Tagansicht */
+:root,
+:root[data-thema="tag"]{
+  color-scheme:light;
+  --bg:#f4f6f7;
+  --flaeche:#ffffff;
+  --flaeche-2:#eef2f4;
+  --kopf-bg:#2C2C54;
+  --rand:#dfe5e9;
+  --linie:#c4ced5;
+  --text:#2C2C54;
+  --text-mute:#5a6570;
+  --text-dim:#93a0a9;
+  --band:rgba(57,103,222,.12);
+}
+
+/* ------------------------------------------------------ Nachtansicht */
+/* Der Styleguide erlaubt auf dem dunklen Navy ausdruecklich Weiss oder Blau.
+   Die Nachtansicht nutzt genau diese Kombination. */
+:root[data-thema="nacht"]{
+  color-scheme:dark;
+  --bg:#2C2C54;
+  --flaeche:#0d1b24;
+  --flaeche-2:#122431;
+  --kopf-bg:#03090d;
+  --rand:#1e3140;
+  --linie:#38505f;
+  --text:#ffffff;
+  --text-mute:#adbcc6;
+  --text-dim:#72868f;
+  --band:rgba(57,103,222,.10);
+}
+
+*{box-sizing:border-box}
+html,body{margin:0}
+body{
+  /* Arial ist die Hausschrift der gollnickdata-Decks.
+     Arial kennt nur Regular und Bold — deshalb ausschliesslich 400 und 700. */
+  font-family:Arial,Helvetica,sans-serif;
+  font-weight:400;
+  background:var(--bg);color:var(--text);
+  -webkit-font-smoothing:antialiased;
+  transition:background .18s,color .18s;
+}
+
+/* ----------------------------------------------------------------- Kopf */
+header{
+  position:relative;background:var(--kopf-bg);color:var(--weiss);
+  padding:16px 104px 14px 22px;
+}
+/* Die beiden Sinnbild-Knoepfe oben rechts: Werkzeuge und Tag/Nacht.
+   Laut Styleguide nur Linien-Sinnbilder in Blau, klein und ohne Kontur. */
+.kopf-knoepfe{position:absolute;top:14px;right:18px;display:flex;gap:8px}
+.kopf-knopf{
+  width:34px;height:34px;padding:0;display:grid;place-items:center;
+  background:transparent;border:1px solid rgba(255,255,255,.2);border-radius:3px;
+  color:var(--blau);cursor:pointer;transition:border-color .12s,background .12s;
+}
+.kopf-knopf:hover{border-color:var(--blau)}
+.kopf-knopf:focus-visible{outline:2px solid var(--blau);outline-offset:2px}
+.kopf-knopf[aria-expanded="true"]{border-color:var(--blau);background:rgba(57,103,222,.18)}
+.sinnbild{
+  width:18px;height:18px;fill:none;stroke:currentColor;
+  stroke-width:1.6;stroke-linecap:round;stroke-linejoin:round;
+}
+/* Gezeigt wird stets die Ansicht, in die geschaltet wird. */
+:root:not([data-thema="nacht"]) .sonne{display:none}
+:root[data-thema="nacht"] .mond{display:none}
+.kopfzeile{display:flex;align-items:baseline;gap:14px;flex-wrap:wrap}
+.marke{font-weight:700;font-size:19px;letter-spacing:1.5px;color:var(--weiss)}
+h1{font-size:19px;margin:0;font-weight:700;letter-spacing:-.2px;color:var(--blau)}
+
+/* ----------------------------------------------------------- Werkzeuge */
+/* Wie bei der Zielscheibe: standardmaessig aus, damit die Tafel im Termin
+   ohne Bedienleiste an der Wand haengt. */
+.werkbank{
+  display:none;align-items:center;gap:7px;flex-wrap:wrap;
+  padding:11px 22px;background:var(--flaeche);border-bottom:1px solid var(--rand);
+  position:sticky;top:0;z-index:30;
+}
+:root[data-werkzeuge="an"] .werkbank{display:flex}
+.knopf{
+  font:inherit;font-size:12.5px;font-weight:400;padding:6px 12px;
+  border:1px solid var(--rand);background:var(--flaeche);border-radius:3px;
+  cursor:pointer;color:var(--text-mute);white-space:nowrap;
+  transition:border-color .12s,color .12s,background .12s;
+}
+.knopf:hover{border-color:var(--blau);color:var(--text)}
+.knopf:focus-visible{outline:2px solid var(--blau);outline-offset:2px}
+.trenner{width:1px;height:20px;background:var(--rand);margin:0 4px}
+.wb-fuell{flex:1 1 auto}
+.wb-status{font-size:11.5px;color:var(--text-dim);white-space:nowrap}
+
+/* -------------------------------------------------------------- Fläche */
+/* Beide Tafeln stehen nebeneinander und sollen zusammen auf einen Bildschirm
+   passen — deshalb durchgehend knappere Masse als bei der Zielscheibe. */
+/* stretch statt start: Beide Tafeln bekommen die Hoehe der hoeheren und
+   schliessen deshalb auf gleicher Linie ab. */
+main{
+  padding:16px 18px 22px;max-width:1560px;margin:0 auto;
+  display:grid;grid-template-columns:1fr 1fr;gap:18px;align-items:stretch;
+}
+.tafel{
+  background:var(--flaeche);border:1px solid var(--rand);border-radius:5px;
+  padding:18px;
+  display:flex;flex-direction:column;
+}
+.tafel-titel{
+  font-size:14px;font-weight:700;letter-spacing:-.1px;margin:0 0 4px;color:var(--text);
+}
+.tafel-balken{
+  height:3px;width:40px;flex:0 0 auto;
+  background:var(--blau);border-radius:2px;margin-bottom:16px;
+}
+
+/* ------------------------------------------------------------- Treppe */
+/* Die sieben Schritte laufen an einer durchgehenden Linie entlang. Die Linie
+   ist der Ruecklauf aus der Vorlage: Man kann an jeder Stelle wieder
+   einsteigen, deshalb zeigt zu jedem Schritt eine Spitze nach rechts. */
+.treppe{position:relative;padding-left:33px}
+.treppe::before{
+  content:"";position:absolute;left:11px;top:9px;bottom:9px;width:2px;
+  background:var(--blau);opacity:.55;
+}
+.schritt{
+  position:relative;background:var(--flaeche-2);border-radius:4px;
+  padding:9px 13px;margin-bottom:6px;
+  margin-left:calc(var(--stufe) * 6px);
+}
+/* Spitze von der Ruecklauflinie in den Schritt */
+.schritt::before{
+  content:"";position:absolute;top:13px;
+  left:calc(-23px - var(--stufe) * 6px);
+  width:0;height:0;
+  border-left:8px solid var(--blau);
+  border-top:5px solid transparent;border-bottom:5px solid transparent;
+}
+.schritt-kopf{display:flex;align-items:baseline;gap:9px}
+.schritt-nr{
+  font-size:10.5px;font-weight:700;color:var(--blau);letter-spacing:1px;
+  min-width:14px;
+}
+.schritt-name{
+  font-size:12px;font-weight:700;letter-spacing:.2px;
+  text-transform:uppercase;color:var(--text);
+}
+.schritt ul{list-style:none;margin:6px 0 0;padding:0}
+.schritt li{
+  font-size:12px;line-height:1.42;color:var(--text-mute);
+  padding-left:14px;position:relative;margin-top:2px;
+}
+.schritt li::before{content:"–";position:absolute;left:0;color:var(--text-dim)}
+.schritt ul ul{margin:1px 0 0}
+.schritt ul ul li{font-size:11.5px}
+/* Zeile mit Leitfrage links und Zuordnung rechts (nur bei der Zielvereinbarung) */
+.paar{display:flex;justify-content:space-between;align-items:baseline;gap:16px;flex-wrap:wrap}
+.zuordnung{font-style:italic;color:var(--text-dim);white-space:nowrap}
+
+/* Knopf, der die Schreiblinie eines Schritts aufmacht. Leise gehalten, weil er
+   siebenmal vorkommt — erst beim Zeigen darauf wird er cyan. */
+.notiz-knopf{
+  margin-left:auto;align-self:center;flex:0 0 auto;
+  width:20px;height:20px;padding:0;display:grid;place-items:center;
+  background:transparent;border:0;border-radius:3px;
+  color:var(--text-dim);cursor:pointer;transition:color .12s,background .12s;
+}
+.notiz-knopf:hover{color:var(--blau);background:var(--band)}
+.notiz-knopf:focus-visible{outline:2px solid var(--blau);outline-offset:1px}
+.notiz-knopf svg{
+  width:13px;height:13px;fill:none;stroke:currentColor;
+  stroke-width:2;stroke-linecap:round;transition:transform .14s;
+}
+.schritt[data-notiz="an"] .notiz-knopf{color:var(--blau)}
+/* Offen wird aus dem Plus ein Kreuz zum Zuklappen. */
+.schritt[data-notiz="an"] .notiz-knopf svg{transform:rotate(45deg)}
+
+/* Schreiblinie je Schritt. Sie ist eingeklappt, bis jemand sie aufmacht —
+   sonst passte die Tafel schon leer nicht mehr auf einen Bildschirm. Offen
+   beginnt sie einzeilig und waechst beim Tippen mit. */
+.notiz{
+  display:none;width:100%;margin-top:8px;
+  font:inherit;font-size:11.5px;line-height:1.45;color:var(--text);
+  background:transparent;border:0;border-bottom:1px solid var(--linie);
+  padding:2px 1px;resize:none;overflow:hidden;
+}
+.notiz:focus{
+  outline:none;border-bottom-color:var(--blau);border-bottom-width:2px;padding-bottom:1px;
+}
+.schritt[data-notiz="an"] .notiz{display:block}
+
+.konsens{
+  margin-top:12px;padding:10px 14px;border-radius:4px;
+  background:var(--band);border-left:3px solid var(--blau);
+  font-size:12px;line-height:1.55;color:var(--text-mute);
+}
+
+/* ---------------------------------------------------------------- Kreis */
+/* Der Kreis nimmt den Hoehenunterschied zur linken Tafel auf und sitzt darin
+   mittig — so entsteht der Ausgleich nicht als Leerraum unter den Aspekten. */
+.kreis-feld{display:flex;justify-content:center;align-items:center;flex:1 1 auto}
+/* Die Hoehe ist an den Bildschirm gebunden, damit der Kreis die rechte Spalte
+   nicht ueber die Sichthoehe hinaus aufzieht. */
+.kreis{width:100%;max-width:560px;max-height:52vh;height:auto}
+.feldgrund{fill:var(--flaeche-2)}
+/* Der Ring ist an jeder Station offen — durch diese Oeffnung stossen die
+   beiden gegenlaeufigen Pfeile zur Mitte und zurueck. Stumpfe Enden, damit
+   die Oeffnungen wie in der Vorlage radial abgeschnitten wirken. */
+.ring-bogen{fill:none;stroke:var(--text);stroke-width:22;stroke-linecap:butt}
+.lauf{fill:none;stroke:var(--blau);stroke-width:4.5;stroke-linecap:butt}
+.sprung{stroke:var(--text-mute);stroke-width:3.2;stroke-linecap:butt}
+.spitze-lauf{fill:var(--blau)}
+.spitze-sprung{fill:var(--text-mute)}
+.station{
+  font-family:inherit;font-size:17px;font-weight:700;fill:var(--text);
+  letter-spacing:.2px;
+}
+.mitte-titel{font-family:inherit;font-size:18px;font-weight:700;fill:var(--text)}
+.mitte-text{font-family:inherit;font-size:14px;fill:var(--text)}
+
+/* -------------------------------------------------------------- Aspekte */
+.aspekte-titel{font-size:12.5px;font-weight:700;margin:16px 0 9px;color:var(--text)}
+.aspekte{list-style:none;margin:0;padding:0;counter-reset:aspekt}
+.aspekte li{
+  counter-increment:aspekt;position:relative;padding-left:29px;margin-bottom:7px;
+  font-size:12px;line-height:1.45;color:var(--text-mute);
+}
+.aspekte li::before{
+  content:counter(aspekt);position:absolute;left:0;top:1px;
+  width:19px;height:19px;border-radius:50%;
+  border:1px solid var(--blau);color:var(--blau);
+  font-size:10px;font-weight:700;display:grid;place-items:center;
+}
+
+/* Unterhalb dieser Breite wird das Nebeneinander zu eng — dann untereinander. */
+@media (max-width:1040px){
+  main{grid-template-columns:1fr;gap:16px}
+  .kreis{max-height:none}
+  .paar{display:block}
+  .zuordnung{display:block;margin-top:1px}
+}
+@media (max-width:820px){
+  .treppe{padding-left:30px}
+  /* Die Stufung kostet auf schmalen Schirmen nur Platz. */
+  .schritt{margin-left:0}
+  .schritt::before{left:-21px}
+}
+
+/* --------------------------------------------------------------- Druck */
+/* Gedruckt wird immer hell — unabhaengig von der Bildschirmansicht. */
+@media print{
+  @page{size:A4 portrait;margin:12mm}
+  .werkbank,.kopf-knoepfe{display:none !important}
+  html,body{background:#fff;color:#2C2C54}
+  header{background:#fff;color:#2C2C54;padding:0 0 5mm;border-bottom:1px solid #ccc}
+  .marke,h1{color:#2C2C54}
+  /* Auf A4 hochkant wird untereinander gedruckt, eine Tafel je Seite. */
+  main{padding:5mm 0 0;max-width:none;display:block}
+  .tafel{background:#fff;border:1px solid #999;padding:6mm;break-inside:avoid}
+  .tafel + .tafel{break-before:page}
+  .kreis{max-height:none;max-width:150mm}
+  .schritt{background:#f2f2f2;break-inside:avoid}
+  .schritt-name,.tafel-titel,.station,.mitte-titel{color:#2C2C54;fill:#2C2C54}
+  .schritt li,.aspekte li,.konsens{color:#333}
+  .mitte-text{fill:#2C2C54}
+  /* Auf Papier werden alle Schreiblinien gezeigt, auch die eingeklappten —
+     so laesst sich die gedruckte Tafel von Hand ausfuellen. */
+  .notiz-knopf{display:none !important}
+  .notiz{display:block !important;color:#2C2C54;border-bottom-color:#999;background:transparent}
+  .feldgrund{fill:#ececec}
+  .ring-bogen{stroke:#2C2C54}
+  .lauf{stroke:#fff}
+  .sprung{stroke:#333}
+  .spitze-lauf{fill:#fff}
+  .spitze-sprung{fill:#333}
+  .konsens{background:#f2f2f2;border-left-color:#333}
+  .aspekte li::before{border-color:#333;color:#333}
+}
+</style>
+<script>
+/* Fruehstart: Ansicht festlegen, bevor die Seite gezeichnet wird — sonst blitzt
+   die Nachtansicht beim Laden kurz hell auf. */
+(function(){
+  var g = null;
+  try{ g = localStorage.getItem("gollnickdata.zielscheibe.thema"); }catch(e){}
+  if(g !== "tag" && g !== "nacht"){
+    g = (window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches)
+      ? "nacht" : "tag";
+  }
+  document.documentElement.dataset.thema = g;
+})();
+</script>
+</head>
+<body>
+
+<header>
+  <div class="kopfzeile">
+    <span class="marke">gollnickdata</span>
+    <h1>Systematische Vorgehensweise</h1>
+  </div>
+  <div class="kopf-knoepfe">
+    <button class="kopf-knopf" id="wbWerkzeuge" type="button"
+            aria-expanded="false" aria-controls="werkbank"
+            aria-label="Werkzeuge einblenden" title="Werkzeuge einblenden (Taste W)">
+      <svg class="sinnbild" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+        <circle cx="12" cy="12" r="3"/>
+        <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1Z"/>
+      </svg>
+    </button>
+    <button class="kopf-knopf" id="wbThema" type="button" aria-pressed="false"
+            aria-label="Nachtansicht einschalten" title="Nachtansicht einschalten (Taste D)">
+      <svg class="sinnbild sonne" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+        <circle cx="12" cy="12" r="4.2"/>
+        <path d="M12 2.4v2.5M12 19.1v2.5M2.4 12h2.5M19.1 12h2.5M5 5l1.8 1.8M17.2 17.2 19 19M19 5l-1.8 1.8M6.8 17.2 5 19"/>
+      </svg>
+      <svg class="sinnbild mond" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+        <path d="M20.4 14.2A8.6 8.6 0 0 1 9.8 3.6 8.6 8.6 0 1 0 20.4 14.2Z"/>
+      </svg>
+    </button>
+  </div>
+</header>
+
+<div class="werkbank" id="werkbank">
+  <button class="knopf" id="wbDruck" title="Beide Tafeln auf A4 drucken">Drucken</button>
+  <button class="knopf" id="wbSichern" title="Eingaben als JSON sichern">Sichern</button>
+  <button class="knopf" id="wbLaden" title="Gesicherte Eingaben laden">Laden</button>
+  <span class="trenner"></span>
+  <button class="knopf" id="wbLeeren" title="Alle Eingaben verwerfen">Leeren</button>
+  <span class="wb-fuell"></span>
+  <span class="wb-status" id="wbStatus"></span>
+  <input type="file" id="wbDatei" accept="application/json" hidden>
+</div>
+
+<main>
+
+  <!-- ================================================== Tafel 1: Treppe -->
+  <section class="tafel">
+    <h2 class="tafel-titel">Eine systematische Vorgehensweise | Mensch-KI Agenten</h2>
+    <div class="tafel-balken"></div>
+
+    <div class="treppe">
+
+      <div class="schritt" style="--stufe:0">
+        <div class="schritt-kopf">
+          <span class="schritt-nr">01</span>
+          <span class="schritt-name">Auftragsklärung</span>
+          <button class="notiz-knopf" type="button" aria-expanded="false" aria-controls="notiz-0"
+                  aria-label="Notiz zu Auftragsklärung hinzufügen" title="Notiz hinzufügen">
+            <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M12 5v14M5 12h14"/></svg>
+          </button>
+        </div>
+        <textarea class="notiz" rows="1" id="notiz-0" data-nr="0" aria-label="Notiz zu Auftragsklärung"></textarea>
+      </div>
+
+      <div class="schritt" style="--stufe:1">
+        <div class="schritt-kopf">
+          <span class="schritt-nr">02</span>
+          <span class="schritt-name">Zielvereinbarung</span>
+          <button class="notiz-knopf" type="button" aria-expanded="false" aria-controls="notiz-1"
+                  aria-label="Notiz zu Zielvereinbarung hinzufügen" title="Notiz hinzufügen">
+            <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M12 5v14M5 12h14"/></svg>
+          </button>
+        </div>
+        <ul>
+          <li class="paar"><span>Wozu soll das Endergebnis dienen?</span><span class="zuordnung">Sinn/Zweck</span></li>
+          <li class="paar"><span>Für wen tun wir das?</span><span class="zuordnung">Kunde/Beteiligte</span></li>
+          <li class="paar"><span>Welches Ergebnis soll bis … erreicht werden?</span><span class="zuordnung">Endergebnis</span></li>
+          <li class="paar"><span>Woran wird das Ergebnis gemessen?</span><span class="zuordnung">Kriterien</span></li>
+        </ul>
+        <textarea class="notiz" rows="1" id="notiz-1" data-nr="1" aria-label="Notiz zu Zielvereinbarung"></textarea>
+      </div>
+
+      <div class="schritt" style="--stufe:2">
+        <div class="schritt-kopf">
+          <span class="schritt-nr">03</span>
+          <span class="schritt-name">Informationen zusammentragen</span>
+          <button class="notiz-knopf" type="button" aria-expanded="false" aria-controls="notiz-2"
+                  aria-label="Notiz zu Informationen zusammentragen hinzufügen" title="Notiz hinzufügen">
+            <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M12 5v14M5 12h14"/></svg>
+          </button>
+        </div>
+        <ul>
+          <li>Fakten, Ideen, Ressourcen, Risiken, Chancen, Alternativen</li>
+        </ul>
+        <textarea class="notiz" rows="1" id="notiz-2" data-nr="2" aria-label="Notiz zu Informationen zusammentragen"></textarea>
+      </div>
+
+      <div class="schritt" style="--stufe:3">
+        <div class="schritt-kopf">
+          <span class="schritt-nr">04</span>
+          <span class="schritt-name">Was muss getan werden?</span>
+          <button class="notiz-knopf" type="button" aria-expanded="false" aria-controls="notiz-3"
+                  aria-label="Notiz zu Was muss getan werden? hinzufügen" title="Notiz hinzufügen">
+            <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M12 5v14M5 12h14"/></svg>
+          </button>
+        </div>
+        <ul>
+          <li>Auflisten von Arbeitsschritten</li>
+          <li>Unterteilen von Aufgaben</li>
+          <li>Prioritätenliste</li>
+        </ul>
+        <textarea class="notiz" rows="1" id="notiz-3" data-nr="3" aria-label="Notiz zu Was muss getan werden?"></textarea>
+      </div>
+
+      <div class="schritt" style="--stufe:4">
+        <div class="schritt-kopf">
+          <span class="schritt-nr">05</span>
+          <span class="schritt-name">Plan aufstellen</span>
+          <button class="notiz-knopf" type="button" aria-expanded="false" aria-controls="notiz-4"
+                  aria-label="Notiz zu Plan aufstellen hinzufügen" title="Notiz hinzufügen">
+            <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M12 5v14M5 12h14"/></svg>
+          </button>
+        </div>
+        <ul>
+          <li>Wer macht was, wie, wann, wo?</li>
+        </ul>
+        <textarea class="notiz" rows="1" id="notiz-4" data-nr="4" aria-label="Notiz zu Plan aufstellen"></textarea>
+      </div>
+
+      <div class="schritt" style="--stufe:5">
+        <div class="schritt-kopf">
+          <span class="schritt-nr">06</span>
+          <span class="schritt-name">Durchführen</span>
+          <button class="notiz-knopf" type="button" aria-expanded="false" aria-controls="notiz-5"
+                  aria-label="Notiz zu Durchführen hinzufügen" title="Notiz hinzufügen">
+            <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M12 5v14M5 12h14"/></svg>
+          </button>
+        </div>
+        <ul>
+          <li>Tun</li>
+        </ul>
+        <textarea class="notiz" rows="1" id="notiz-5" data-nr="5" aria-label="Notiz zu Durchführen"></textarea>
+      </div>
+
+      <div class="schritt" style="--stufe:6">
+        <div class="schritt-kopf">
+          <span class="schritt-nr">07</span>
+          <span class="schritt-name">Rückblende</span>
+          <button class="notiz-knopf" type="button" aria-expanded="false" aria-controls="notiz-6"
+                  aria-label="Notiz zu Rückblende hinzufügen" title="Notiz hinzufügen">
+            <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M12 5v14M5 12h14"/></svg>
+          </button>
+        </div>
+        <ul>
+          <li>Arbeitsergebnis:
+            <ul><li>Soll-/Ist-Vergleich</li></ul>
+          </li>
+          <li>Arbeitsprozess:
+            <ul>
+              <li>Was war hilfreich?</li>
+              <li>Was können wir besser machen?</li>
+              <li>Verabredungen für die weitere Zusammenarbeit</li>
+            </ul>
+          </li>
+        </ul>
+        <textarea class="notiz" rows="1" id="notiz-6" data-nr="6" aria-label="Notiz zu Rückblende"></textarea>
+      </div>
+
+    </div>
+
+    <div class="konsens">
+      Konsens schrittweise herstellen.<br>
+      Zwischenrückblende möglichst nach jedem Schritt.
+    </div>
+  </section>
+
+  <!-- =================================================== Tafel 2: Kreis -->
+  <section class="tafel">
+    <h2 class="tafel-titel">Der flexible Einsatz der systematischen Vorgehensweise</h2>
+    <div class="tafel-balken"></div>
+
+    <div class="kreis-feld">
+      <svg class="kreis" viewBox="0 0 640 640" role="img"
+           aria-label="Kreis mit den sechs Stationen Auftrag, Ziel, Info, Plan, Tun und
+                       Rückblende. Der Ring hat an jeder Station eine Öffnung. Die
+                       hellen Pfeile außen laufen im Uhrzeigersinn von Station zu Station,
+                       durch jede Öffnung stößt ein Pfeilpaar nach innen und nach außen
+                       zur Vereinbarung in der Mitte.">
+        <defs>
+          <marker id="spitzeLauf" viewBox="0 0 10 10" refX="8.4" refY="5"
+                  markerWidth="5" markerHeight="5" orient="auto">
+            <path class="spitze-lauf" d="M0 0 L10 5 L0 10 Z"/>
+          </marker>
+          <marker id="spitzeSprung" viewBox="0 0 10 10" refX="8.4" refY="5"
+                  markerWidth="4.6" markerHeight="4.6" orient="auto">
+            <path class="spitze-sprung" d="M0 0 L10 5 L0 10 Z"/>
+          </marker>
+        </defs>
+
+        <rect class="feldgrund" x="0" y="0" width="640" height="640" rx="5"/>
+
+        <!-- Ring: sechs Boegen, die Luecken liegen auf den Stationen -->
+        <path class="ring-bogen" d="M266.2 180.0 A150 150 0 0 1 373.8 180.0"/>
+        <path class="ring-bogen" d="M414.4 203.4 A150 150 0 0 1 468.2 296.5"/>
+        <path class="ring-bogen" d="M468.2 343.5 A150 150 0 0 1 414.4 436.6"/>
+        <path class="ring-bogen" d="M373.8 460.0 A150 150 0 0 1 266.2 460.0"/>
+        <path class="ring-bogen" d="M225.6 436.6 A150 150 0 0 1 171.8 343.5"/>
+        <path class="ring-bogen" d="M171.8 296.5 A150 150 0 0 1 225.6 203.4"/>
+
+        <!-- Laufpfeile aussen, im Uhrzeigersinn von Station zu Station -->
+        <path class="lauf" d="M268.7 114.3 A212 212 0 0 1 371.3 114.3" marker-end="url(#spitzeLauf)"/>
+        <path class="lauf" d="M472.5 172.7 A212 212 0 0 1 523.8 261.6" marker-end="url(#spitzeLauf)"/>
+        <path class="lauf" d="M523.8 378.4 A212 212 0 0 1 472.5 467.3" marker-end="url(#spitzeLauf)"/>
+        <path class="lauf" d="M371.3 525.7 A212 212 0 0 1 268.7 525.7" marker-end="url(#spitzeLauf)"/>
+        <path class="lauf" d="M167.5 467.3 A212 212 0 0 1 116.2 378.4" marker-end="url(#spitzeLauf)"/>
+        <path class="lauf" d="M116.2 261.6 A212 212 0 0 1 167.5 172.7" marker-end="url(#spitzeLauf)"/>
+
+        <!-- Pfeilpaare durch die Oeffnungen: je einer nach aussen, einer nach innen -->
+        <line class="sprung" x1="280.8" y1="241.0" x2="229.8" y2="152.7" marker-end="url(#spitzeSprung)"/>
+        <line class="sprung" x1="220.2" y1="158.2" x2="271.2" y2="246.5" marker-end="url(#spitzeSprung)"/>
+        <line class="sprung" x1="368.8" y1="246.5" x2="419.8" y2="158.2" marker-end="url(#spitzeSprung)"/>
+        <line class="sprung" x1="410.2" y1="152.7" x2="359.2" y2="241.0" marker-end="url(#spitzeSprung)"/>
+        <line class="sprung" x1="408.0" y1="325.5" x2="510.0" y2="325.5" marker-end="url(#spitzeSprung)"/>
+        <line class="sprung" x1="510.0" y1="314.5" x2="408.0" y2="314.5" marker-end="url(#spitzeSprung)"/>
+        <line class="sprung" x1="359.2" y1="399.0" x2="410.2" y2="487.3" marker-end="url(#spitzeSprung)"/>
+        <line class="sprung" x1="419.8" y1="481.8" x2="368.8" y2="393.5" marker-end="url(#spitzeSprung)"/>
+        <line class="sprung" x1="271.2" y1="393.5" x2="220.2" y2="481.8" marker-end="url(#spitzeSprung)"/>
+        <line class="sprung" x1="229.8" y1="487.3" x2="280.8" y2="399.0" marker-end="url(#spitzeSprung)"/>
+        <line class="sprung" x1="232.0" y1="314.5" x2="130.0" y2="314.5" marker-end="url(#spitzeSprung)"/>
+        <line class="sprung" x1="130.0" y1="325.5" x2="232.0" y2="325.5" marker-end="url(#spitzeSprung)"/>
+
+        <!-- Mitte: nur Text, der Ring selbst ist die Begrenzung -->
+        <text class="mitte-titel" x="320" y="290" text-anchor="middle">Vereinbarung</text>
+        <text class="mitte-text"  x="320" y="312" text-anchor="middle">Gemeinsames</text>
+        <text class="mitte-text"  x="320" y="329" text-anchor="middle">Verständnis darüber,</text>
+        <text class="mitte-text"  x="320" y="346" text-anchor="middle">wer an welcher</text>
+        <text class="mitte-text"  x="320" y="363" text-anchor="middle">Stelle weitermacht</text>
+
+        <!-- Stationen -->
+        <text class="station" x="210.0" y="129.5" text-anchor="end" dominant-baseline="middle">Auftrag</text>
+        <text class="station" x="430.0" y="129.5" text-anchor="start" dominant-baseline="middle">Ziel</text>
+        <text class="station" x="540.0" y="320.0" text-anchor="start" dominant-baseline="middle">Info</text>
+        <text class="station" x="430.0" y="510.5" text-anchor="start" dominant-baseline="middle">Plan</text>
+        <text class="station" x="210.0" y="510.5" text-anchor="end" dominant-baseline="middle">Tun</text>
+        <text class="station" x="100.0" y="320.0" text-anchor="end" dominant-baseline="middle">Rückblende</text>
+      </svg>
+    </div>
+
+    <h3 class="aspekte-titel">In dem Kontext sind folgende fünf Aspekte wichtig:</h3>
+    <ol class="aspekte">
+      <li>ein gemeinsames Verständnis im Arbeitsteam, wo der Einstieg ist</li>
+      <li>ein gemeinsames Bewusstsein für erforderliche fehlende Schritte und entsprechende
+          „Schleifen“ und/oder „Abkürzungen“ im Vorgehen</li>
+      <li>wiederholte Orientierung, in welcher Phase des Arbeitsprozesses sich das Team befindet</li>
+      <li>Vereinbarungen zu inhaltlichen Zwischenständen/-ergebnissen nach jedem Schritt
+          innerhalb des Teams</li>
+      <li>kontinuierliche Kommunikation mit wichtigen Stakeholdern außerhalb des Teams</li>
+    </ol>
+  </section>
+
+</main>
+
+<script>
+"use strict";
+
+/* ----------------------------------------------------- Tag und Nacht */
+/* Beim ersten Aufruf richtet sich die Ansicht nach der Systemeinstellung;
+   eine eigene Wahl wird gemerkt und hat danach Vorrang. Der Schluessel ist
+   derselbe wie bei der Zielscheibe — die beiden Blaetter gehoeren zusammen
+   und sollen nicht in unterschiedlichen Ansichten aufgehen. */
+const SPEICHER_THEMA = "gollnickdata.zielscheibe.thema";
+
+function setzeThema(thema, merken){
+  const nacht = thema === "nacht";
+  document.documentElement.dataset.thema = nacht ? "nacht" : "tag";
+  const knopf = document.getElementById("wbThema");
+  const benennung = nacht ? "Tagansicht einschalten" : "Nachtansicht einschalten";
+  knopf.setAttribute("aria-pressed", String(nacht));
+  knopf.setAttribute("aria-label", benennung);
+  knopf.title = benennung + " (Taste D)";
+  if(merken){
+    try{ localStorage.setItem(SPEICHER_THEMA, nacht ? "nacht" : "tag"); }catch(e){}
+  }
+}
+
+/* Der Fruehstart im <head> hat die Ansicht bereits gesetzt — hier nur der Knopf. */
+setzeThema(document.documentElement.dataset.thema === "nacht" ? "nacht" : "tag", false);
+
+document.getElementById("wbThema").addEventListener("click", () => {
+  const nachtJetzt = document.documentElement.dataset.thema === "nacht";
+  setzeThema(nachtJetzt ? "tag" : "nacht", true);
+});
+
+/* ----------------------------------------------------------- Werkzeuge */
+/* Bei jedem Aufruf zunaechst aus, bewusst ohne Gedaechtnis — damit die Tafel
+   im Kundentermin ohne Bedienleiste aufgeht. */
+function setzeWerkzeuge(an){
+  const knopf = document.getElementById("wbWerkzeuge");
+  if(an) document.documentElement.dataset.werkzeuge = "an";
+  else   delete document.documentElement.dataset.werkzeuge;
+  const benennung = an ? "Werkzeuge ausblenden" : "Werkzeuge einblenden";
+  knopf.setAttribute("aria-expanded", String(an));
+  knopf.setAttribute("aria-label", benennung);
+  knopf.title = benennung + " (Taste W)";
+}
+
+setzeWerkzeuge(false);
+
+document.getElementById("wbWerkzeuge").addEventListener("click", () => {
+  setzeWerkzeuge(document.documentElement.dataset.werkzeuge !== "an");
+});
+
+/* ------------------------------------------------------------ Eingaben */
+/* Je Schritt eine Schreiblinie. Die Eingaben bleiben lokal im Browser dieses
+   Rechners und werden bei jeder Aenderung gesichert. */
+const SPEICHER = "gollnickdata.vorgehensweise.v1";
+const felder = () => Array.from(document.querySelectorAll(".notiz"));
+
+/* Einzeilig starten, beim Tippen mitwachsen. */
+function hoeheAnpassen(feld){
+  feld.style.height = "auto";
+  feld.style.height = (feld.scrollHeight + 2) + "px";
+}
+
+function lies(){ return felder().map(f => f.value.trim()); }
+
+/* Eine Zeile auf- oder zuklappen. Zugeklappt startet die Tafel, damit sie
+   leer auf einen Bildschirm passt. */
+function zeigeZeile(schritt, an){
+  if(an) schritt.dataset.notiz = "an";
+  else   delete schritt.dataset.notiz;
+  const knopf = schritt.querySelector(".notiz-knopf");
+  const name  = schritt.querySelector(".schritt-name").textContent;
+  knopf.setAttribute("aria-expanded", String(an));
+  knopf.setAttribute("aria-label", (an ? "Notiz zu " + name + " zuklappen"
+                                       : "Notiz zu " + name + " hinzufügen"));
+  knopf.title = an ? "Notiz zuklappen" : "Notiz hinzufügen";
+}
+
+function schreib(werte){
+  felder().forEach((f, i) => {
+    f.value = (werte && werte[i]) || "";
+    /* Was Inhalt hat, wird gezeigt — sonst waere der Text nach dem Laden weg. */
+    zeigeZeile(f.closest(".schritt"), f.value !== "");
+    hoeheAnpassen(f);
+  });
+}
+
+document.querySelectorAll(".notiz-knopf").forEach(knopf => {
+  knopf.addEventListener("click", () => {
+    const schritt = knopf.closest(".schritt");
+    const feld    = schritt.querySelector(".notiz");
+    const offen   = schritt.dataset.notiz === "an";
+    /* Offen und leer: zuklappen. Offen mit Text: nur hineinspringen, damit
+       nichts versehentlich aus dem Blick geraet. */
+    if(offen && feld.value.trim() === ""){ zeigeZeile(schritt, false); return; }
+    if(!offen) zeigeZeile(schritt, true);
+    hoeheAnpassen(feld);
+    feld.focus();
+  });
+});
+
+/* Wer eine leere Zeile wieder verlaesst, bekommt sie zugeklappt zurueck. */
+document.addEventListener("focusout", ev => {
+  if(!ev.target.classList || !ev.target.classList.contains("notiz")) return;
+  if(ev.target.value.trim() === "") zeigeZeile(ev.target.closest(".schritt"), false);
+});
+
+function merke(){
+  try{ localStorage.setItem(SPEICHER, JSON.stringify(lies())); }
+  catch(e){ /* privater Modus oder Speicher gesperrt */ }
+}
+
+function hole(){
+  try{
+    const roh = localStorage.getItem(SPEICHER);
+    const wert = roh ? JSON.parse(roh) : null;
+    return Array.isArray(wert) ? wert : null;
+  }catch(e){ return null; }
+}
+
+document.addEventListener("input", ev => {
+  if(!ev.target.classList.contains("notiz")) return;
+  hoeheAnpassen(ev.target);
+  merke();
+});
+
+/* Beim Umbruch aendert sich die Zeilenzahl — Hoehen der offenen Zeilen nachziehen.
+   Zugeklappte haben keine messbare Hoehe und werden beim Aufklappen gesetzt. */
+window.addEventListener("resize", () => {
+  felder().forEach(f => { if(f.closest(".schritt").dataset.notiz === "an") hoeheAnpassen(f); });
+});
+
+/* -------------------------------------------------------------- Meldung */
+let meldeUhr = null;
+function status(text){
+  const el = document.getElementById("wbStatus");
+  el.textContent = text;
+  clearTimeout(meldeUhr);
+  meldeUhr = setTimeout(() => { el.textContent = ""; }, 3200);
+}
+
+/* ------------------------------------------------------- Sichern/Laden */
+document.getElementById("wbSichern").addEventListener("click", () => {
+  const blob = new Blob([JSON.stringify(lies(), null, 2)], {type:"application/json"});
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(blob);
+  a.download = "gollnickdata_Vorgehensweise.json";
+  a.click();
+  URL.revokeObjectURL(a.href);
+  status("Gesichert");
+});
+
+document.getElementById("wbLaden").addEventListener("click", () => {
+  document.getElementById("wbDatei").click();
+});
+
+document.getElementById("wbDatei").addEventListener("change", ev => {
+  const datei = ev.target.files && ev.target.files[0];
+  if(!datei) return;
+  const leser = new FileReader();
+  leser.onload = () => {
+    try{
+      const wert = JSON.parse(leser.result);
+      if(!Array.isArray(wert)) throw new Error("kein Feldsatz");
+      schreib(wert);
+      merke();
+      status("Geladen");
+    }catch(e){ status("Datei nicht lesbar"); }
+  };
+  leser.readAsText(datei);
+  ev.target.value = "";
+});
+
+document.getElementById("wbLeeren").addEventListener("click", () => {
+  if(!confirm("Alle Eingaben dieser Tafel verwerfen?")) return;
+  schreib([]);
+  merke();
+  status("Geleert");
+});
+
+document.getElementById("wbDruck").addEventListener("click", () => window.print());
+
+document.addEventListener("keydown", ev => {
+  if(ev.ctrlKey || ev.altKey || ev.metaKey) return;
+  if(/^(INPUT|TEXTAREA)$/.test(ev.target.tagName)) return;
+  if(ev.key === "d" || ev.key === "D") document.getElementById("wbThema").click();
+  if(ev.key === "w" || ev.key === "W") document.getElementById("wbWerkzeuge").click();
+});
+
+/* ---------------------------------------------------------------- Start */
+/* Ohne gesicherten Stand bleiben alle Zeilen zugeklappt — die Tafel geht leer
+   auf und passt auf einen Bildschirm. */
+const vorhanden = hole();
+if(vorhanden && vorhanden.some(w => w)){
+  schreib(vorhanden);
+  status("Vorheriger Stand wiederhergestellt");
+}
+</script>
+</body>
+</html>
