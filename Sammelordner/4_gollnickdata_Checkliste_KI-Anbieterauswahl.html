@@ -1,0 +1,957 @@
+<!DOCTYPE html>
+<html lang="de" data-thema="tag">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>gollnickdata Checkliste — Die richtige KI für Ihr Unternehmen</title>
+<style>
+:root{
+  /* Markenfarben laut gollnickdata Styleguide — in beiden Ansichten unveraendert */
+  --blau:#3967DE; --navy:#2C2C54; --weiss:#ffffff;
+  /* Sekundärfarben, hier zur Unterscheidung der Bearbeitungsstände */
+  --indigo:#7C8FE8; --amber:#F2C14E; --teal:#3FC79A;
+  font-synthesis-weight:none;
+}
+
+/* -------------------------------------------------------- Tagansicht */
+:root,
+:root[data-thema="tag"]{
+  color-scheme:light;
+  --bg:#f4f6f7; --flaeche:#ffffff; --flaeche-still:#fafbfc;
+  --kopf-bg:#2C2C54; --kopf-sub:#9fb0bb;
+  --rand:#dfe5e9; --rand-soft:#edf1f3;
+  --text:#2C2C54; --text-mute:#5a6570; --text-dim:#93a0a9;
+  --chip-leer:#c9d2d8;
+}
+
+/* ------------------------------------------------------ Nachtansicht */
+/* Der Styleguide erlaubt auf Black ausdruecklich White oder Cyan. */
+:root[data-thema="nacht"]{
+  color-scheme:dark;
+  --bg:#2C2C54; --flaeche:#0d1b24; --flaeche-still:#0a151c;
+  --kopf-bg:#03090d; --kopf-sub:#7d919e;
+  --rand:#1e3140; --rand-soft:#16252f;
+  --text:#ffffff; --text-mute:#adbcc6; --text-dim:#72868f;
+  --chip-leer:#3c5464;
+}
+
+*{box-sizing:border-box}
+html,body{margin:0}
+body{
+  /* Arial ist die Hausschrift der gollnickdata-Decks; Arial kennt nur Regular und
+     Bold — deshalb ausschliesslich 400 und 700. */
+  font-family:Arial,Helvetica,sans-serif;
+  font-weight:400;
+  background:var(--bg);color:var(--text);
+  -webkit-font-smoothing:antialiased;
+  transition:background .18s,color .18s;
+}
+
+/* ----------------------------------------------------------------- Kopf */
+header{
+  position:relative;background:var(--kopf-bg);color:var(--weiss);
+  padding:16px 64px 14px 22px;
+}
+.kopfzeile{display:flex;align-items:baseline;gap:14px;flex-wrap:wrap}
+.marke{font-weight:700;font-size:19px;letter-spacing:1.5px;color:var(--weiss)}
+h1{font-size:19px;margin:0;font-weight:700;letter-spacing:-.2px;color:var(--blau)}
+/* Ohne Breitenbegrenzung, damit die Zeile am Stueck steht. Erst wenn das Fenster
+   wirklich zu schmal ist, wird umgebrochen — statt quer zu scrollen. */
+.untertitel{font-size:12px;color:var(--kopf-sub);margin-top:6px;line-height:1.55}
+.untertitel b{color:var(--weiss);font-weight:700}
+
+/* Umschalter Tag/Nacht — oben rechts.
+   Laut Styleguide nur Linien-Sinnbilder in Cyan, klein und ohne Kontur. */
+.thema-knopf{
+  position:absolute;top:14px;right:18px;
+  width:34px;height:34px;padding:0;display:grid;place-items:center;
+  background:transparent;border:1px solid rgba(255,255,255,.2);border-radius:3px;
+  color:var(--blau);cursor:pointer;transition:border-color .12s;
+}
+.thema-knopf:hover{border-color:var(--blau)}
+.thema-knopf:focus-visible{outline:2px solid var(--blau);outline-offset:2px}
+.sinnbild{
+  width:18px;height:18px;fill:none;stroke:currentColor;
+  stroke-width:1.6;stroke-linecap:round;stroke-linejoin:round;
+}
+/* Gezeigt wird stets die Ansicht, in die geschaltet wird. */
+:root:not([data-thema="nacht"]) .sonne{display:none}
+:root[data-thema="nacht"] .mond{display:none}
+
+/* ------------------------------------------------------------ Werkbank */
+.werkbank{
+  display:flex;align-items:center;gap:7px;flex-wrap:wrap;
+  padding:11px 22px;background:var(--flaeche);border-bottom:1px solid var(--rand);
+  position:sticky;top:0;z-index:30;
+}
+.knopf{
+  font:inherit;font-size:12.5px;font-weight:400;padding:6px 12px;
+  border:1px solid var(--rand);background:var(--flaeche);border-radius:3px;
+  cursor:pointer;color:var(--text-mute);white-space:nowrap;
+  transition:border-color .12s,color .12s,background .12s;
+}
+.knopf:hover{border-color:var(--blau);color:var(--text)}
+.knopf:focus-visible{outline:2px solid var(--blau);outline-offset:2px}
+.knopf.haupt{background:var(--blau);border-color:var(--blau);color:var(--weiss);font-weight:700}
+.knopf.haupt:hover{background:#5a82e8;border-color:#5a82e8;color:var(--weiss)}
+.trenner{width:1px;height:20px;background:var(--rand);margin:0 4px}
+.wb-fuell{flex:1 1 auto}
+.wb-status{font-size:11.5px;color:var(--text-dim);white-space:nowrap}
+
+/* --------------------------------------------------------------- Spiegel */
+.spiegel{
+  display:flex;align-items:center;gap:16px;flex-wrap:wrap;
+  padding:12px 22px;background:var(--flaeche-still);border-bottom:1px solid var(--rand);
+  font-size:11.5px;color:var(--text-mute);
+}
+.spiegel-gruppe{display:flex;align-items:center;gap:7px}
+.spiegel-punkt{width:11px;height:11px;border-radius:50%;flex:none}
+.balken{
+  flex:1 1 220px;min-width:160px;height:6px;border-radius:3px;
+  background:var(--chip-leer);overflow:hidden;
+}
+.balken i{display:block;height:100%;background:var(--blau);width:0;transition:width .2s}
+
+/* --------------------------------------------------------------- Fläche */
+main{padding:22px;max-width:1080px;margin:0 auto}
+
+.kopffelder{display:flex;gap:16px;flex-wrap:wrap;margin-bottom:20px}
+.kopffeld{flex:1 1 240px;min-width:0}
+.kopffeld label{
+  display:block;font-size:10px;font-weight:700;text-transform:uppercase;
+  letter-spacing:1.2px;color:var(--text-dim);margin-bottom:5px;
+}
+.kopffeld input{
+  width:100%;font:inherit;font-size:14px;padding:8px 11px;
+  border:1px solid var(--rand);border-radius:3px;background:var(--flaeche);color:var(--text);
+}
+.kopffeld input:focus{outline:none;border-color:var(--blau)}
+
+/* -------------------------------------------------------------- Abschnitt */
+.abschnitt{
+  background:var(--flaeche);border:1px solid var(--rand);border-radius:5px;
+  margin-bottom:16px;overflow:hidden;
+}
+.abschnitt-kopf{
+  display:flex;align-items:baseline;gap:12px;flex-wrap:wrap;
+  padding:14px 18px 12px;border-bottom:1px solid var(--rand-soft);
+  cursor:pointer;user-select:none;
+}
+.abschnitt-nr{
+  font-size:11px;font-weight:700;color:var(--weiss);background:var(--blau);
+  border-radius:3px;padding:2px 7px;flex:none;
+}
+.abschnitt-kopf h2{font-size:14.5px;margin:0;font-weight:700;flex:1 1 auto;min-width:0}
+.abschnitt-zaehler{font-size:11px;color:var(--text-dim);white-space:nowrap}
+.abschnitt-pfeil{
+  font-size:11px;color:var(--text-dim);flex:none;
+  transition:transform .15s;transform-origin:center;
+}
+.abschnitt[data-zu="ja"] .abschnitt-pfeil{transform:rotate(-90deg)}
+.abschnitt[data-zu="ja"] .abschnitt-koerper{display:none}
+.abschnitt-leit{
+  padding:11px 18px;font-size:12px;color:var(--text-mute);line-height:1.55;
+  background:var(--flaeche-still);border-bottom:1px solid var(--rand-soft);
+}
+
+/* ----------------------------------------------------------------- Punkt */
+.punkt{
+  display:grid;
+  grid-template-columns:112px minmax(0,1fr) 150px;
+  gap:10px 14px;
+  padding:13px 18px;border-bottom:1px solid var(--rand-soft);
+}
+.punkt:last-child{border-bottom:0}
+.punkt-text{min-width:0}
+.punkt-text h3{font-size:13px;margin:0 0 4px;font-weight:700;line-height:1.35}
+.punkt-text p{font-size:12px;margin:0;color:var(--text-mute);line-height:1.5}
+
+.chip{
+  font:inherit;font-size:11px;font-weight:700;padding:5px 9px;
+  border:1px solid var(--rand);border-radius:3px;cursor:pointer;
+  background:var(--flaeche);color:var(--text-mute);
+  width:100%;text-align:left;white-space:nowrap;
+  display:flex;align-items:center;gap:6px;
+}
+.chip:hover{border-color:var(--blau)}
+.chip:focus-visible{outline:2px solid var(--blau);outline-offset:2px}
+.chip i{width:9px;height:9px;border-radius:50%;background:var(--chip-leer);flex:none}
+.chip[data-wert="klaerung"] i{background:var(--indigo)}
+.chip[data-wert="geklaert"] i{background:var(--teal)}
+.chip[data-wert="risiko"]   i{background:var(--amber)}
+.chip[data-wert="entfaellt"]{color:var(--text-dim)}
+.chip[data-wert="entfaellt"] i{background:transparent;border:1px solid var(--chip-leer)}
+
+.punkt-rechts{display:flex;flex-direction:column;gap:7px;min-width:0}
+.feld{
+  font:inherit;font-size:12px;padding:5px 8px;width:100%;
+  border:1px solid var(--rand);border-radius:3px;
+  background:var(--flaeche);color:var(--text);
+}
+.feld::placeholder{color:var(--text-dim)}
+.feld:focus{outline:none;border-color:var(--blau)}
+textarea.feld{resize:vertical;min-height:34px;line-height:1.45}
+
+/* -------------------------------------------------------------- Bezugsweg */
+.wege{display:grid;grid-template-columns:repeat(auto-fit,minmax(224px,1fr));gap:12px;padding:16px 18px}
+.weg{
+  border:1px solid var(--rand);border-radius:4px;padding:12px 13px;
+  background:var(--flaeche);cursor:pointer;text-align:left;font:inherit;color:var(--text);
+  display:flex;flex-direction:column;gap:7px;transition:border-color .12s,background .12s;
+}
+.weg:hover{border-color:var(--blau)}
+.weg:focus-visible{outline:2px solid var(--blau);outline-offset:2px}
+.weg[aria-pressed="true"]{border-color:var(--blau);border-width:2px;padding:11px 12px}
+.weg h3{font-size:12.5px;margin:0;font-weight:700;display:flex;align-items:center;gap:7px}
+.weg h3 i{
+  width:10px;height:10px;border-radius:50%;border:1px solid var(--chip-leer);
+  background:transparent;flex:none;
+}
+.weg[aria-pressed="true"] h3 i{background:var(--blau);border-color:var(--blau)}
+.weg dl{margin:0;font-size:11.5px;line-height:1.5}
+.weg dt{
+  font-weight:700;color:var(--text-dim);text-transform:uppercase;
+  letter-spacing:.8px;font-size:9.5px;margin-top:4px;
+}
+.weg dd{margin:1px 0 0;color:var(--text-mute)}
+
+/* ----------------------------------------------------------------- Fuss */
+.abschrift{
+  position:fixed;top:8%;left:50%;transform:translateX(-50%);
+  width:min(720px,92vw);height:60vh;z-index:99;font:inherit;font-size:12.5px;
+  padding:14px;border:2px solid var(--blau);border-radius:4px;
+  background:var(--flaeche);color:var(--text);
+}
+
+@media (max-width:780px){
+  .punkt{grid-template-columns:1fr;gap:9px}
+  .punkt-links{order:2}
+  .punkt-text{order:1}
+  .punkt-rechts{order:3}
+  .chip{width:auto;display:inline-flex}
+}
+
+/* --------------------------------------------------------------- Druck */
+/* Gedruckt wird immer hell — unabhaengig von der Bildschirmansicht. */
+#druck{display:none}
+@media print{
+  @page{size:A4 portrait;margin:14mm}
+  .werkbank,.spiegel,.abschrift,.thema-knopf,main{display:none !important}
+  html,body{background:#fff;color:#2C2C54}
+  header{background:#fff;color:#2C2C54;padding:0 0 4mm;border-bottom:1px solid #ccc}
+  .marke,h1{color:#2C2C54}
+  .untertitel{display:none}
+  #druck{display:block;padding:5mm 0 0;font-size:10pt;line-height:1.45}
+  #druck .dk{font-size:9pt;color:#555;margin-bottom:6mm}
+  #druck h2{font-size:11.5pt;margin:6mm 0 2mm;border-bottom:1px solid #ccc;padding-bottom:1mm}
+  #druck table{width:100%;border-collapse:collapse;font-size:9pt}
+  #druck th{background:#2C2C54;color:#fff;text-align:left;padding:1.8mm;font-size:8.5pt}
+  #druck td{border-bottom:1px solid #ddd;padding:1.8mm;vertical-align:top}
+  #druck td.eng{white-space:nowrap}
+  #druck tr{break-inside:avoid}
+}
+</style>
+<script>
+/* Fruehstart: Ansicht festlegen, bevor die Seite gezeichnet wird — sonst blitzt
+   die Nachtansicht beim Laden kurz hell auf. */
+(function(){
+  var g = null;
+  try{ g = localStorage.getItem("gollnickdata.anbieterwahl.thema"); }catch(e){}
+  if(g !== "tag" && g !== "nacht"){
+    g = (window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches)
+      ? "nacht" : "tag";
+  }
+  document.documentElement.dataset.thema = g;
+})();
+</script>
+</head>
+<body>
+
+<header>
+  <div class="kopfzeile">
+    <span class="marke">gollnickdata</span>
+    <h1>Die richtige KI für Ihr Unternehmen</h1>
+  </div>
+  <div class="untertitel">Sechs Leitfragen vor der Entscheidung: Ist-Zustand, Modelle und Funktionen, Recht, Nutzen, Wirtschaftlichkeit und KI-Kompetenz.</div>
+  <button class="thema-knopf" id="wbThema" type="button" aria-pressed="false"
+          aria-label="Nachtansicht einschalten" title="Nachtansicht einschalten (Taste D)">
+    <svg class="sinnbild sonne" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+      <circle cx="12" cy="12" r="4.2"/>
+      <path d="M12 2.4v2.5M12 19.1v2.5M2.4 12h2.5M19.1 12h2.5M5 5l1.8 1.8M17.2 17.2 19 19M19 5l-1.8 1.8M6.8 17.2 5 19"/>
+    </svg>
+    <svg class="sinnbild mond" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+      <path d="M20.4 14.2A8.6 8.6 0 0 1 9.8 3.6 8.6 8.6 0 1 0 20.4 14.2Z"/>
+    </svg>
+  </button>
+</header>
+
+<div class="werkbank">
+  <button class="knopf haupt" id="wbProtokoll" title="Stand als Markdown-Protokoll sichern">Protokoll</button>
+  <button class="knopf" id="wbDruck" title="Auswertung drucken oder als PDF sichern">Drucken</button>
+  <button class="knopf" id="wbSichern" title="Kompletten Stand als JSON sichern">Sichern</button>
+  <button class="knopf" id="wbLaden" title="Gesicherten Stand laden">Laden</button>
+  <span class="trenner"></span>
+  <button class="knopf" id="wbAuf" title="Alle Abschnitte auf- oder zuklappen">Alle zuklappen</button>
+  <button class="knopf" id="wbLeeren" title="Alle Eingaben verwerfen">Leeren</button>
+  <span class="wb-fuell"></span>
+  <span class="wb-status" id="wbStatus"></span>
+  <input type="file" id="wbDatei" accept="application/json" hidden>
+</div>
+
+<div class="spiegel" id="spiegel"></div>
+
+<main>
+  <div class="kopffelder">
+    <div class="kopffeld">
+      <label for="fallTitel">Unternehmen / Vorhaben</label>
+      <input type="text" id="fallTitel" autocomplete="off">
+    </div>
+    <div class="kopffeld">
+      <label for="fallKandidat">Geprüfter Anbieter / Kandidat</label>
+      <input type="text" id="fallKandidat" autocomplete="off">
+    </div>
+    <div class="kopffeld">
+      <label for="fallDatum">Stand</label>
+      <input type="text" id="fallDatum" autocomplete="off">
+    </div>
+  </div>
+
+  <div id="abschnitte"></div>
+</main>
+
+<div id="druck"></div>
+
+<script>
+"use strict";
+
+/* ===================================================================== Daten */
+
+const STATUS = [
+  {wert:"offen",     text:"offen"},
+  {wert:"klaerung",  text:"in Klärung"},
+  {wert:"geklaert",  text:"geklärt"},
+  {wert:"risiko",    text:"Risiko"},
+  {wert:"entfaellt", text:"entfällt"}
+];
+const STATUSTEXT = Object.fromEntries(STATUS.map(s => [s.wert, s.text]));
+
+const ABSCHNITTE = [
+  {
+    nr:1,
+    titel:"Wo steht das eigene Unternehmen mit KI?",
+    leit:"Vor der Auswahl steht die Bestandsaufnahme. Nicht jedes Unternehmen startet mit " +
+         "denselben Voraussetzungen — und ein leistungsfähiges Werkzeug nützt wenig, wenn " +
+         "Können, Infrastruktur oder Zuständigkeit fehlen.",
+    punkte:[
+      {nr:"1.1", titel:"Technisches Können der Beschäftigten einschätzen",
+       text:"Für einfache Anwendungen genügen klare Vorgaben und Schulungen. Wer Agenten " +
+            "oder Coding-Werkzeuge einsetzen will, braucht erfahrene Nutzer und interne " +
+            "Ansprechpartner."},
+      {nr:"1.2", titel:"Konkrete Einsatzzwecke festlegen",
+       text:"Texte zusammenfassen stellt andere Anforderungen als die Suche in internen " +
+            "Dokumenten oder das Bearbeiten von E-Mails. Je tiefer die KI in Arbeitsabläufe " +
+            "eingreift, desto wichtiger werden sichere Datenzugänge."},
+      {nr:"1.3", titel:"Vorhandene IT-Infrastruktur prüfen",
+       text:"Lokal betriebene Modelle und anspruchsvolle Coding-Werkzeuge verlangen andere " +
+            "Voraussetzungen als eine cloudbasierte Chat-Anwendung."},
+      {nr:"1.4", titel:"Kompatibilität mit bestehender Software bewerten",
+       text:"In einer Microsoft-Landschaft zählt die Einbindung in Word, Excel, PowerPoint " +
+            "und Teams; anderswo sind Google-Anwendungen, CRM oder ein internes Archiv " +
+            "entscheidend."},
+      {nr:"1.5", titel:"Verantwortlichkeiten und Organisation festlegen",
+       text:"Wer führt ein, wer schult, wer verwaltet Berechtigungen, wer begleitet die " +
+            "Weiterentwicklung? Ohne benannte Zuständigkeit bringt auch die stärkste " +
+            "Lösung im Alltag wenig."}
+    ]
+  },
+  {
+    nr:2,
+    titel:"Welche Modelle und Funktionen sollen genutzt werden?",
+    leit:"Modellverfügbarkeit kann zum Ausschlusskriterium werden. Zu klären ist, ob es " +
+         "Zugang zum jeweils stärksten Modell braucht — oder vor allem verlässliche " +
+         "Routine, stabile Preise und Verarbeitung in Europa.",
+    punkte:[
+      {nr:"2.1", titel:"Modellbedarf bestimmen",
+       text:"Braucht es den schnellen Zugang zu neuen Spitzenmodellen, oder zählen stabile " +
+            "Preise, kurze Vertragswege und europäische Verarbeitung mehr?"},
+      {nr:"2.2", titel:"Benötigten Funktionsumfang festlegen",
+       text:"Chat, wiederverwendbare Skills, Agenten für selbständige Aufgaben, Workflows " +
+            "für mehrstufige Abläufe, Wissensdatenbanken für interne Dokumente — welche " +
+            "dieser Bausteine werden wirklich gebraucht?"},
+      {nr:"2.3", titel:"Teilen und Rechteverwaltung prüfen",
+       text:"Lassen sich Anwendungen im Team teilen, gemeinsam weiterentwickeln und mit " +
+            "unterschiedlichen Zugriffsrechten verwalten?"},
+      {nr:"2.4", titel:"Changelog des Anbieters auswerten",
+       text:"Wie regelmäßig erscheinen Funktionen, wie schnell kommen neue Modelle dazu? " +
+            "Hohes Tempo ist kein Qualitätsmerkmal: Werden Änderungen angekündigt, bleiben " +
+            "Abläufe nach Updates funktionsfähig?"},
+      {nr:"2.5", titel:"Aufwand durch Produktänderungen einplanen",
+       text:"Gerade bei Agenten, Wissensdatenbanken und Workflows erzeugen schnelle " +
+            "Änderungen zusätzlichen Prüf- und Schulungsaufwand."}
+    ]
+  },
+  {
+    nr:3,
+    titel:"Welche Anforderungen gelten für Datenschutz und Compliance?",
+    leit:"„Ein völlig souveränes KI-Werkzeug zu nutzen, ist gerade fast unmöglich.“ " +
+         "Umso genauer muss geprüft werden, was tatsächlich vertraglich zugesichert ist.",
+    punkte:[
+      {nr:"3.1", titel:"Speicherort klären",
+       text:"In welchem Land und bei welchem Anbieter werden Daten verarbeitet und " +
+            "gespeichert?"},
+      {nr:"3.2", titel:"Zugriff und Eigentümerstruktur prüfen",
+       text:"Welche Beschäftigten, Dienstleister und Behörden können zugreifen? Ein " +
+            "europäischer Serverstandort beseitigt Zugriffsrechte eines US-Konzerns nicht " +
+            "automatisch."},
+      {nr:"3.3", titel:"Löschung und Aufbewahrung festlegen",
+       text:"Wie lange speichert der Anbieter Eingaben, Ausgaben und hochgeladene Dateien? " +
+            "Die Frist gehört ausdrücklich in den Vertrag."},
+      {nr:"3.4", titel:"Training mit eigenen Daten ausschließen",
+       text:"Verwendet der Anbieter die Daten zur Modellentwicklung, und welche Rechte " +
+            "räumt er sich laut Nutzungsbedingungen daran ein?"},
+      {nr:"3.5", titel:"Anonymisierung vor der Übermittlung prüfen",
+       text:"Lassen sich Daten aggregieren, anonymisieren oder pseudonymisieren, bevor sie " +
+            "den Anbieter erreichen? Das kann Gegenstand der Vertragsverhandlung sein."},
+      {nr:"3.6", titel:"Cloud-Act-Risiko bewerten",
+       text:"Unterliegt der Anbieter US-Recht — auch mittelbar über Konzernmutter oder " +
+            "Hyperscaler? Dann besteht ein möglicher Behördenzugriff, unabhängig vom " +
+            "Serverstandort."},
+      {nr:"3.7", titel:"Zertifikate richtig einordnen",
+       text:"ISO 27001 belegt Sicherheitsstandards, sagt aber nichts über US-Zugriff. " +
+            "„DSGVO-konform“ ist kein offizielles Zertifikat, sondern eine Eigenaussage."},
+      {nr:"3.8", titel:"Branchenpflichten abgleichen",
+       text:"Berufsgeheimnis (§ 203 StGB, §§ 43a/43e BRAO), DORA für Banken und " +
+            "Versicherer, Art. 9 DSGVO für Gesundheitsdaten. Hier genügt ein EU-Standort " +
+            "als Nachweis nicht."},
+      {nr:"3.9", titel:"Freigabe- und Teilen-Funktionen regeln",
+       text:"Ende Juli 2026 erschienen geteilte Claude-Chats in Suchmaschinen. Zu klären: " +
+            "Welche Teilen-Funktionen existieren, lassen sie sich abschalten, und was gilt " +
+            "als Regel für die Beschäftigten?"}
+    ]
+  },
+  {
+    nr:4,
+    titel:"Wie lässt sich der Nutzen messen?",
+    leit:"Viele Unternehmen starten mit großen Erwartungen und wissen nach Monaten nicht, " +
+         "ob die KI Zeit spart, Qualität verbessert oder nur Kosten erzeugt. Die " +
+         "Messgrößen gehören vor die Auswahl, nicht danach.",
+    punkte:[
+      {nr:"4.1", titel:"Erfolgskriterien vorab festlegen",
+       text:"Woran soll der Erfolg gemessen werden — und ab wann gilt ein Anwendungsfall " +
+            "als gescheitert?"},
+      {nr:"4.2", titel:"Zeitersparnis je Aufgabe erheben",
+       text:"Für welche konkreten Tätigkeiten wird die Dauer vorher und nachher " +
+            "verglichen?"},
+      {nr:"4.3", titel:"Ergebnisqualität beurteilen",
+       text:"Werden Texte, Analysen oder Programmcode tatsächlich besser — und wer " +
+            "beurteilt das?"},
+      {nr:"4.4", titel:"Tatsächliche Nutzung beobachten",
+       text:"Nutzen die Beschäftigten das Werkzeug wirklich? Geringe Nutzung ist ein " +
+            "Befund, kein Betriebsunfall."},
+      {nr:"4.5", titel:"Fehler und Eingriffe zählen",
+       text:"Welche Fehler entstehen, und wie oft müssen Mitarbeiter korrigierend " +
+            "eingreifen?"},
+      {nr:"4.6", titel:"Reviews terminieren",
+       text:"In festen Abständen prüfen, ob der Nutzen eintritt, und den Plan anpassen, " +
+            "statt am ursprünglichen Fall festzuhalten."},
+      {nr:"4.7", titel:"Vollständige Bilanz rechnen",
+       text:"Eingesparte Kosten gegen Lizenzkosten, Einführungsaufwand und die nötige " +
+            "Kontrolle der Ergebnisse stellen."}
+    ]
+  },
+  {
+    nr:5,
+    titel:"Ist die Lösung dauerhaft finanzierbar?",
+    leit:"Der erste Vertrag wirkt oft überschaubar. Teuer wird es, wenn Preise sich " +
+         "ändern, Funktionen extra kosten oder ein Wechsel die gesamte Einrichtung " +
+         "infrage stellt.",
+    punkte:[
+      {nr:"5.1", titel:"Gesamtkosten berechnen",
+       text:"Neben Lizenzen: Modellnutzung, Agenten und Workflows, Schnittstellen, " +
+            "Speicher, Einrichtung, Schulungen, Support, Migration und die laufende Pflege " +
+            "von Wissensbeständen."},
+      {nr:"5.2", titel:"Preismodell prüfen",
+       text:"Steigen die Kosten mit Nutzerzahl, Anfragen oder verarbeiteten Daten? Gibt es " +
+            "Obergrenzen?"},
+      {nr:"5.3", titel:"Datenexport sicherstellen",
+       text:"Lassen sich Dokumente, Wissensbestände, Prompts, Konfigurationen und " +
+            "Gesprächsverläufe in einem brauchbaren Format sichern?"},
+      {nr:"5.4", titel:"Modell- und Anbieterwechsel offenhalten",
+       text:"Kann ein anderes Modell genutzt werden, ohne die Anwendung neu aufzusetzen? " +
+            "Offene Modelle sind bei vergleichbarer Leistung teils deutlich günstiger — " +
+            "das nützt nur bei austauschbarer Anbindung."},
+      {nr:"5.5", titel:"Verträge und Kündigungsfristen prüfen",
+       text:"Laufzeit, Ausstiegsgebühren, Unterstützung beim Wechsel zu einem anderen " +
+            "System."},
+      {nr:"5.6", titel:"Eigene Arbeitsabläufe sichern",
+       text:"Lassen sich aufgebaute Agenten und Workflows übertragen, oder müssten sie von " +
+            "Grund auf neu entstehen?"},
+      {nr:"5.7", titel:"Übertragbares Wissen aufbauen",
+       text:"Wissen sichern, das einen Anbieterwechsel überlebt — etwa verbindliche " +
+            "Vorgaben für Schrift, Farben und Abstände als wiederverwendbarer Skill."},
+      {nr:"5.8", titel:"Konditionen verhandeln",
+       text:"Lizenzzahl, Laufzeit und Nutzungsumfang beeinflussen den Preis. " +
+            "Unternehmenskunden können zudem Speicherung, Löschung und Trainingsnutzung " +
+            "vertraglich festlegen."}
+    ]
+  },
+  {
+    nr:6,
+    titel:"Querschnitt: KI-Kompetenz der Beschäftigten",
+    leit:"Wird Schatten-KI im Unternehmen verwendet? Kompetenz ist deshalb kein " +
+         "Nachgelagertes, sondern Teil der Compliance.",
+    punkte:[
+      {nr:"6.1", titel:"Schatten-KI erheben",
+       text:"Welche Werkzeuge sind bereits im Einsatz, ohne freigegeben zu sein? Ohne " +
+            "diese Bestandsaufnahme bleibt jede Auswahl Theorie."},
+      {nr:"6.2", titel:"Beschäftigte früh einbeziehen",
+       text:"Sie kennen die Arbeitsabläufe und zeigen, wo Schulungen oder klare Grenzen " +
+            "nötig sind. Das erhöht die Akzeptanz und senkt unkontrollierten Einsatz."},
+      {nr:"6.3", titel:"Risikoeinschätzung schulen",
+       text:"Beschäftigte müssen Risiken einstufen können — besonders bei Agenten, die " +
+            "selbständig auf Daten zugreifen oder Aktionen auslösen."},
+      {nr:"6.4", titel:"Nutzungsregeln je Werkzeug festlegen",
+       text:"Welches Werkzeug ist für welche Aufgabe freigegeben, welche Daten dürfen dort " +
+            "verarbeitet werden, und wer kontrolliert die Ergebnisse?"}
+    ]
+  }
+];
+
+const WEGE = [
+  {wert:"anbieter", titel:"1 — Einen Modellanbieter wählen",
+   dafuer:"Unmittelbarer Zugang zu Modellen und Produktentwicklung, ein Vertrag, eine " +
+          "Benutzerverwaltung, ein Ansprechpartner.",
+   dagegen:"Enge Bindung an dessen Strategie: Preise, Bedingungen, Modelle und " +
+           "Schnittstellen können sich ändern. Kein Anbieter ist für jede Aufgabe der beste."},
+  {wert:"plattform", titel:"2 — Mehrere Modelle über eine Plattform",
+   dafuer:"Modelle verschiedener Anbieter in einer Oberfläche, weniger Konten, weniger " +
+          "Einzelintegrationen für die IT.",
+   dagegen:"Der Plattformanbieter entscheidet, welche Modelle verfügbar sind. Zu prüfen: " +
+           "Aufnahmetempo, Schnittstellen, Sperrbarkeit einzelner Modelle."},
+  {wert:"offen", titel:"3 — Offene Modelle selbst betreiben",
+   dafuer:"Mehr Kontrolle über Datenverarbeitung, Modellzugriff und Anpassungen; kein " +
+          "Abfluss an einen externen Anbieter.",
+   dagegen:"Verlangt Infrastruktur, erfahrenes Personal und laufende Wartung. Kleinere " +
+           "Modellauswahl; die stärksten Modelle sind nicht selbst betreibbar."},
+  {wert:"mix", titel:"4 — Spezialisierte Werkzeuge parallel",
+   dafuer:"Beste Qualität je Einzelaufgabe, weil jede Anwendung für ihren Zweck gewählt " +
+          "wird.",
+   dagegen:"Mehr Verwaltungsaufwand: mehrere Verträge, Rechte und Datenschutzvorgaben — " +
+           "und klare Regeln, welches Werkzeug wofür freigegeben ist."}
+];
+
+const SPEICHER = "gollnickdata.anbieterwahl.v1";
+const SPEICHER_THEMA = "gollnickdata.anbieterwahl.thema";
+
+/* ===================================================================== Stand */
+
+let zustand = {kopf:{titel:"", kandidat:"", datum:""}, punkte:{}, weg:"", zu:{}};
+
+function leererPunkt(){ return {status:"offen", owner:"", notiz:""}; }
+
+ABSCHNITTE.forEach(a => a.punkte.forEach(p => { zustand.punkte[p.nr] = leererPunkt(); }));
+
+/* ============================================================== Tag und Nacht */
+
+function setzeThema(thema, merken){
+  const nacht = thema === "nacht";
+  document.documentElement.dataset.thema = nacht ? "nacht" : "tag";
+  const knopf = document.getElementById("wbThema");
+  const benennung = nacht ? "Tagansicht einschalten" : "Nachtansicht einschalten";
+  knopf.setAttribute("aria-pressed", String(nacht));
+  knopf.setAttribute("aria-label", benennung);
+  knopf.title = benennung + " (Taste D)";
+  if(merken){
+    try{ localStorage.setItem(SPEICHER_THEMA, nacht ? "nacht" : "tag"); }catch(e){}
+  }
+}
+setzeThema(document.documentElement.dataset.thema === "nacht" ? "nacht" : "tag", false);
+
+document.getElementById("wbThema").addEventListener("click", () => {
+  setzeThema(document.documentElement.dataset.thema === "nacht" ? "tag" : "nacht", true);
+});
+
+document.addEventListener("keydown", ev => {
+  if(ev.ctrlKey || ev.altKey || ev.metaKey) return;
+  if(/^(INPUT|TEXTAREA)$/.test(ev.target.tagName)) return;
+  if(ev.key === "d" || ev.key === "D") document.getElementById("wbThema").click();
+});
+
+/* ===================================================================== Aufbau */
+
+function schutz(t){
+  return String(t).replace(/[&<>"]/g, z => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[z]));
+}
+
+function baueAbschnitte(){
+  const ziel = document.getElementById("abschnitte");
+  ziel.innerHTML = "";
+
+  ABSCHNITTE.forEach(a => {
+    const el = document.createElement("section");
+    el.className = "abschnitt";
+    el.dataset.nr = String(a.nr);
+    el.dataset.zu = "nein";
+
+    let html =
+      '<div class="abschnitt-kopf js-klapp" role="button" tabindex="0" aria-expanded="true">' +
+        '<span class="abschnitt-nr">' + a.nr + '</span>' +
+        '<h2>' + schutz(a.titel) + '</h2>' +
+        '<span class="abschnitt-zaehler" data-zaehler="' + a.nr + '"></span>' +
+        '<span class="abschnitt-pfeil">▼</span>' +
+      '</div>' +
+      '<div class="abschnitt-koerper">' +
+        '<div class="abschnitt-leit">' + schutz(a.leit) + '</div>';
+
+    a.punkte.forEach(p => {
+      html +=
+        '<div class="punkt" data-punkt="' + p.nr + '">' +
+          '<div class="punkt-links">' +
+            '<button class="chip js-status" type="button" data-wert="offen"></button>' +
+          '</div>' +
+          '<div class="punkt-text">' +
+            '<h3>' + p.nr + ' &nbsp;' + schutz(p.titel) + '</h3>' +
+            '<p>' + schutz(p.text) + '</p>' +
+          '</div>' +
+          '<div class="punkt-rechts">' +
+            '<input class="feld js-owner" type="text" placeholder="Verantwortlich" autocomplete="off">' +
+            '<textarea class="feld js-notiz" rows="1" placeholder="Notiz"></textarea>' +
+          '</div>' +
+        '</div>';
+    });
+
+    /* Der Bezugsweg ist eine Entscheidung, kein Haken — deshalb als Auswahl. */
+    if(a.nr === 2){
+      html += '<div class="wege" id="wege">';
+      WEGE.forEach(w => {
+        html +=
+          '<button class="weg js-weg" type="button" data-wert="' + w.wert + '" aria-pressed="false">' +
+            '<h3><i></i>' + schutz(w.titel) + '</h3>' +
+            '<dl>' +
+              '<dt>Dafür</dt><dd>' + schutz(w.dafuer) + '</dd>' +
+              '<dt>Dagegen</dt><dd>' + schutz(w.dagegen) + '</dd>' +
+            '</dl>' +
+          '</button>';
+      });
+      html += '</div>';
+    }
+
+    html += '</div>';
+    el.innerHTML = html;
+    ziel.appendChild(el);
+  });
+}
+
+/* ================================================================= Darstellen */
+
+function zeichnePunkte(){
+  document.querySelectorAll(".punkt").forEach(el => {
+    const z = zustand.punkte[el.dataset.punkt];
+    const chip = el.querySelector(".js-status");
+    chip.dataset.wert = z.status;
+    chip.innerHTML = '<i></i>' + STATUSTEXT[z.status];
+    chip.title = "Weiterschalten: " + STATUS.map(s => s.text).join(" → ");
+    el.querySelector(".js-owner").value = z.owner;
+    el.querySelector(".js-notiz").value = z.notiz;
+  });
+  document.querySelectorAll(".js-weg").forEach(el => {
+    el.setAttribute("aria-pressed", String(el.dataset.wert === zustand.weg));
+  });
+}
+
+function zeichneSpiegel(){
+  const zahl = {};
+  STATUS.forEach(s => zahl[s.wert] = 0);
+  Object.values(zustand.punkte).forEach(z => zahl[z.status]++);
+
+  const gesamt = Object.values(zustand.punkte).length;
+  const zaehlend = gesamt - zahl.entfaellt;
+  const fertig = zahl.geklaert;
+  const anteil = zaehlend > 0 ? Math.round(fertig / zaehlend * 100) : 0;
+
+  let html = '<div class="balken"><i style="width:' + anteil + '%"></i></div>' +
+             '<span><b>' + anteil + ' %</b> geklärt (' + fertig + ' von ' + zaehlend + ')</span>';
+  STATUS.forEach(s => {
+    if(s.wert === "geklaert") return;
+    html += '<span class="spiegel-gruppe">' +
+              '<span class="spiegel-punkt" style="background:' + farbeZu(s.wert) + '"></span>' +
+              schutz(s.text) + ': ' + zahl[s.wert] +
+            '</span>';
+  });
+  document.getElementById("spiegel").innerHTML = html;
+
+  ABSCHNITTE.forEach(a => {
+    const offen = a.punkte.filter(p => zustand.punkte[p.nr].status === "offen").length;
+    const risiko = a.punkte.filter(p => zustand.punkte[p.nr].status === "risiko").length;
+    const feld = document.querySelector('[data-zaehler="' + a.nr + '"]');
+    const teile = [];
+    if(offen)  teile.push(offen + " offen");
+    if(risiko) teile.push(risiko + " Risiko");
+    feld.textContent = teile.length ? teile.join(" · ") : "vollständig";
+  });
+}
+
+function farbeZu(wert){
+  if(wert === "klaerung")  return "var(--indigo)";
+  if(wert === "geklaert")  return "var(--teal)";
+  if(wert === "risiko")    return "var(--amber)";
+  return "var(--chip-leer)";
+}
+
+function aktualisiere(){
+  zeichnePunkte();
+  zeichneSpiegel();
+  merke();
+}
+
+/* =================================================================== Bedienung */
+
+document.addEventListener("click", ev => {
+  const chip = ev.target.closest(".js-status");
+  if(chip){
+    const nr = chip.closest(".punkt").dataset.punkt;
+    const z = zustand.punkte[nr];
+    const i = STATUS.findIndex(s => s.wert === z.status);
+    z.status = STATUS[(i + 1) % STATUS.length].wert;
+    aktualisiere();
+    return;
+  }
+  const weg = ev.target.closest(".js-weg");
+  if(weg){
+    zustand.weg = (zustand.weg === weg.dataset.wert) ? "" : weg.dataset.wert;
+    aktualisiere();
+    return;
+  }
+  const klapp = ev.target.closest(".js-klapp");
+  if(klapp){
+    const ab = klapp.closest(".abschnitt");
+    const zu = ab.dataset.zu === "ja";
+    ab.dataset.zu = zu ? "nein" : "ja";
+    klapp.setAttribute("aria-expanded", String(zu));
+    zustand.zu[ab.dataset.nr] = !zu;
+    merke();
+  }
+});
+
+document.addEventListener("keydown", ev => {
+  if(ev.key !== "Enter" && ev.key !== " ") return;
+  const klapp = ev.target.closest(".js-klapp");
+  if(klapp){ ev.preventDefault(); klapp.click(); }
+});
+
+document.addEventListener("input", ev => {
+  const punkt = ev.target.closest(".punkt");
+  if(punkt){
+    const z = zustand.punkte[punkt.dataset.punkt];
+    if(ev.target.classList.contains("js-owner")) z.owner = ev.target.value;
+    if(ev.target.classList.contains("js-notiz")) z.notiz = ev.target.value;
+    merke();
+    return;
+  }
+  if(ev.target.closest(".kopffeld")){
+    zustand.kopf.titel    = document.getElementById("fallTitel").value;
+    zustand.kopf.kandidat = document.getElementById("fallKandidat").value;
+    zustand.kopf.datum    = document.getElementById("fallDatum").value;
+    merke();
+  }
+});
+
+/* ===================================================================== Meldung */
+
+let meldeUhr = null;
+function status(text){
+  const el = document.getElementById("wbStatus");
+  el.textContent = text;
+  clearTimeout(meldeUhr);
+  meldeUhr = setTimeout(() => { el.textContent = ""; }, 3200);
+}
+
+/* ================================================================== Sicherung */
+
+function merke(){
+  try{ localStorage.setItem(SPEICHER, JSON.stringify(zustand)); }
+  catch(e){ /* privater Modus oder Speicher gesperrt */ }
+}
+
+function hole(){
+  try{
+    const roh = localStorage.getItem(SPEICHER);
+    return roh ? JSON.parse(roh) : null;
+  }catch(e){ return null; }
+}
+
+function uebernimm(neu){
+  if(!neu) return false;
+  if(neu.kopf) Object.assign(zustand.kopf, neu.kopf);
+  ABSCHNITTE.forEach(a => a.punkte.forEach(p => {
+    zustand.punkte[p.nr] = Object.assign(leererPunkt(), (neu.punkte || {})[p.nr] || {});
+    if(!STATUSTEXT[zustand.punkte[p.nr].status]) zustand.punkte[p.nr].status = "offen";
+  }));
+  zustand.weg = WEGE.some(w => w.wert === neu.weg) ? neu.weg : "";
+  zustand.zu = (neu.zu && typeof neu.zu === "object") ? neu.zu : {};
+  document.getElementById("fallTitel").value    = zustand.kopf.titel || "";
+  document.getElementById("fallKandidat").value = zustand.kopf.kandidat || "";
+  document.getElementById("fallDatum").value    = zustand.kopf.datum || "";
+  Object.keys(zustand.zu).forEach(nr => {
+    const ab = document.querySelector('.abschnitt[data-nr="' + nr + '"]');
+    if(!ab) return;
+    ab.dataset.zu = zustand.zu[nr] ? "ja" : "nein";
+    ab.querySelector(".js-klapp").setAttribute("aria-expanded", String(!zustand.zu[nr]));
+  });
+  return true;
+}
+
+/* ==================================================================== Ausgaben */
+
+function kennung(){
+  const roh = zustand.kopf.kandidat || zustand.kopf.titel || "";
+  return roh.replace(/[^\wÄÖÜäöüß -]/g, "").trim().replace(/\s+/g, "_") || "ohne_Titel";
+}
+
+function protokollText(){
+  const k = zustand.kopf;
+  const zeilen = ["# KI-Anbieterauswahl — Prüfstand", ""];
+  if(k.titel)    zeilen.push("**Unternehmen / Vorhaben:** " + k.titel);
+  if(k.kandidat) zeilen.push("**Geprüfter Anbieter:** " + k.kandidat);
+  if(k.datum)    zeilen.push("**Stand:** " + k.datum);
+  const gewaehlt = WEGE.find(w => w.wert === zustand.weg);
+  if(gewaehlt)   zeilen.push("**Bezugsweg:** " + gewaehlt.titel);
+  zeilen.push("");
+
+  const risiken = [];
+  const offene = [];
+
+  ABSCHNITTE.forEach(a => {
+    zeilen.push("## " + a.nr + ". " + a.titel);
+    zeilen.push("");
+    a.punkte.forEach(p => {
+      const z = zustand.punkte[p.nr];
+      let zeile = "- **" + p.nr + " " + p.titel + "** — " + STATUSTEXT[z.status];
+      if(z.owner) zeile += " · " + z.owner;
+      if(z.notiz) zeile += "  \n  " + z.notiz.replace(/\n/g, " ");
+      zeilen.push(zeile);
+      if(z.status === "risiko") risiken.push(p.nr + " " + p.titel + (z.owner ? " (" + z.owner + ")" : ""));
+      if(z.status === "offen")  offene.push(p.nr + " " + p.titel);
+    });
+    zeilen.push("");
+  });
+
+  if(risiken.length){
+    zeilen.push("## Als Risiko markiert", "");
+    risiken.forEach(r => zeilen.push("- " + r));
+    zeilen.push("");
+  }
+  if(offene.length){
+    zeilen.push("## Noch offen", "");
+    offene.forEach(r => zeilen.push("- " + r));
+    zeilen.push("");
+  }
+  return zeilen.join("\n").replace(/\n+$/, "");
+}
+
+function gibDatei(inhalt, name, typ){
+  const blob = new Blob([inhalt], {type:typ});
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(blob);
+  a.download = name;
+  a.click();
+  URL.revokeObjectURL(a.href);
+}
+
+document.getElementById("wbProtokoll").addEventListener("click", () => {
+  gibDatei(protokollText(), "gollnickdata_KI-Anbieterauswahl_" + kennung() + ".md", "text/markdown");
+  status("Protokoll gesichert");
+});
+
+document.getElementById("wbSichern").addEventListener("click", () => {
+  gibDatei(JSON.stringify(zustand, null, 2),
+           "gollnickdata_KI-Anbieterauswahl_" + kennung() + ".json", "application/json");
+  status("Gesichert");
+});
+
+document.getElementById("wbLaden").addEventListener("click", () => {
+  document.getElementById("wbDatei").click();
+});
+document.getElementById("wbDatei").addEventListener("change", ev => {
+  const datei = ev.target.files && ev.target.files[0];
+  if(!datei) return;
+  const leser = new FileReader();
+  leser.onload = () => {
+    try{
+      uebernimm(JSON.parse(leser.result));
+      aktualisiere();
+      status("Geladen");
+    }catch(e){ status("Datei nicht lesbar"); }
+  };
+  leser.readAsText(datei);
+  ev.target.value = "";
+});
+
+/* ====================================================================== Druck */
+
+function baueDruck(){
+  const k = zustand.kopf;
+  const gewaehlt = WEGE.find(w => w.wert === zustand.weg);
+  let html = "<h1>KI-Anbieterauswahl — Prüfstand</h1><div class='dk'>";
+  const kopfteile = [];
+  if(k.titel)    kopfteile.push("Vorhaben: " + schutz(k.titel));
+  if(k.kandidat) kopfteile.push("Anbieter: " + schutz(k.kandidat));
+  if(k.datum)    kopfteile.push("Stand: " + schutz(k.datum));
+  if(gewaehlt)   kopfteile.push("Bezugsweg: " + schutz(gewaehlt.titel));
+  html += kopfteile.join(" · ") + "</div>";
+
+  ABSCHNITTE.forEach(a => {
+    html += "<h2>" + a.nr + ". " + schutz(a.titel) + "</h2>";
+    html += "<table><tr><th style='width:8%'>Nr.</th><th style='width:38%'>Prüfpunkt</th>" +
+            "<th style='width:12%'>Status</th><th style='width:17%'>Verantwortlich</th>" +
+            "<th>Notiz</th></tr>";
+    a.punkte.forEach(p => {
+      const z = zustand.punkte[p.nr];
+      html += "<tr><td class='eng'>" + p.nr + "</td><td>" + schutz(p.titel) + "</td>" +
+              "<td class='eng'>" + STATUSTEXT[z.status] + "</td>" +
+              "<td>" + schutz(z.owner) + "</td><td>" + schutz(z.notiz) + "</td></tr>";
+    });
+    html += "</table>";
+  });
+
+  document.getElementById("druck").innerHTML = html;
+}
+window.addEventListener("beforeprint", baueDruck);
+document.getElementById("wbDruck").addEventListener("click", () => { baueDruck(); window.print(); });
+
+/* =================================================================== Werkbank */
+
+document.getElementById("wbAuf").addEventListener("click", ev => {
+  const alleZu = Array.from(document.querySelectorAll(".abschnitt"))
+                      .every(a => a.dataset.zu === "ja");
+  document.querySelectorAll(".abschnitt").forEach(a => {
+    a.dataset.zu = alleZu ? "nein" : "ja";
+    a.querySelector(".js-klapp").setAttribute("aria-expanded", String(alleZu));
+    zustand.zu[a.dataset.nr] = !alleZu;
+  });
+  ev.target.textContent = alleZu ? "Alle zuklappen" : "Alle aufklappen";
+  merke();
+});
+
+document.getElementById("wbLeeren").addEventListener("click", () => {
+  if(!confirm("Alle Eingaben dieser Checkliste verwerfen?")) return;
+  zustand.kopf = {titel:"", kandidat:"", datum:""};
+  zustand.weg = "";
+  ABSCHNITTE.forEach(a => a.punkte.forEach(p => { zustand.punkte[p.nr] = leererPunkt(); }));
+  document.getElementById("fallTitel").value = "";
+  document.getElementById("fallKandidat").value = "";
+  document.getElementById("fallDatum").value = "";
+  aktualisiere();
+  status("Geleert");
+});
+
+/* ====================================================================== Start */
+
+baueAbschnitte();
+const wiederhergestellt = uebernimm(hole());
+zeichnePunkte();
+zeichneSpiegel();
+if(wiederhergestellt) status("Vorheriger Stand wiederhergestellt");
+</script>
+</body>
+</html>
