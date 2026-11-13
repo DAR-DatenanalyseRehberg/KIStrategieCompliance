@@ -1,0 +1,900 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Datenprodukte: Selbst-Check</title>
+<style>
+:root{
+  --blau:#3967DE; --blau-zart:rgba(57,103,222,.10);
+  --navy:#2C2C54; --weiss:#ffffff;
+  --bg:#f4f6f7; --flaeche:#ffffff; --rand:#dfe5e9; --rand-soft:#eef2f4;
+  --text:#2C2C54; --text-mute:#5a6570; --text-dim:#93a0a9;
+  --offen:#c4ced5; --begonnen:#F2C14E; --etabliert:#3FC79A; --entfaellt:#dfe5e9;
+  --jetzt:#3967DE; --neunzig:#7C8FE8; --spaeter:#93a0a9;
+  --kopf-h:96px;
+  font-synthesis-weight:none;
+}
+*{box-sizing:border-box}
+html,body{height:100%;margin:0}
+body{
+  font-family:Arial,Helvetica,sans-serif;
+  background:var(--bg);color:var(--text);overflow:hidden;
+}
+
+/* ---------------------------------------------------------------- Kopf */
+header{
+  position:fixed;inset:0 0 auto 0;height:var(--kopf-h);z-index:40;
+  background:var(--flaeche);border-bottom:1px solid var(--rand);
+  display:flex;flex-direction:column;justify-content:center;padding:0 18px;
+}
+.kopfzeile{display:flex;align-items:baseline;gap:12px;flex-wrap:wrap}
+h1{font-size:17px;margin:0;font-weight:700;letter-spacing:-.2px}
+h1 .akzent{color:var(--blau)}
+.werkbank{display:flex;align-items:center;gap:6px;margin-top:9px;flex-wrap:wrap}
+.wb-titel{
+  font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:1px;
+  color:var(--text-dim);margin-right:4px;
+}
+.knopf{
+  font:inherit;font-size:12px;padding:5px 10px;border:1px solid var(--rand);
+  background:var(--flaeche);border-radius:3px;cursor:pointer;color:var(--text-mute);
+  white-space:nowrap;transition:background .12s,border-color .12s,color .12s;
+}
+.knopf:hover{border-color:var(--blau);color:var(--blau)}
+.knopf[aria-pressed="true"]{background:var(--blau);border-color:var(--blau);color:var(--weiss)}
+.knopf.still{border-style:dashed;color:var(--text-dim)}
+.trenner{width:1px;height:18px;background:var(--rand);margin:0 3px}
+.wb-fuell{flex:1 1 auto}
+.wb-status{font-size:11px;color:var(--text-dim);white-space:nowrap}
+.wb-farben{display:flex;gap:4px;margin-right:2px}
+.farbtupfer{
+  width:17px;height:17px;border-radius:50%;border:1px solid rgba(0,0,0,.2);
+  cursor:pointer;padding:0;
+}
+.farbtupfer[aria-pressed="true"]{outline:2px solid var(--text);outline-offset:1px}
+
+/* -------------------------------------------------------------- Bühne */
+#feld{position:fixed;inset:var(--kopf-h) 0 0 0;overflow:hidden;cursor:grab;background:
+  radial-gradient(circle at 1px 1px,#d5dde2 1px,transparent 0) 0 0/26px 26px,var(--bg);}
+#feld.zieht{cursor:grabbing}
+#buehne{position:absolute;top:0;left:0;transform-origin:0 0;will-change:transform}
+
+.rahmen{
+  position:absolute;background:var(--flaeche);border:1px solid var(--rand);
+  border-radius:5px;box-shadow:0 1px 3px rgba(0,0,0,.05);
+}
+.rahmen-kopf{
+  padding:11px 15px 9px;border-bottom:1px solid var(--rand-soft);
+  display:flex;align-items:baseline;gap:9px;
+}
+.rahmen-kopf h2{font-size:14px;margin:0;font-weight:700}
+.rahmen-kopf .zusatz{font-size:11px;color:var(--text-dim);margin-left:auto;text-align:right}
+.rahmen-koerper{padding:13px 15px 15px}
+
+/* ------------------------------------------------------ Wirkungsfelder */
+.wirkung{
+  border-left:3px solid var(--blau);padding:8px 0 8px 11px;margin-bottom:11px;
+}
+.wirkung:last-child{margin-bottom:0}
+.wirkung h3{font-size:12.5px;margin:0 0 5px;font-weight:700}
+.wirkung ul{margin:0;padding-left:15px}
+.wirkung li{font-size:11.5px;line-height:1.5;color:var(--text-mute);margin-bottom:2px}
+
+/* ------------------------------------------------------------ Schritte */
+.schritt{
+  border:1px solid var(--rand);border-radius:4px;margin-bottom:9px;
+  border-left:4px solid var(--offen);background:var(--flaeche);
+}
+.schritt:last-child{margin-bottom:0}
+.schritt[data-status="begonnen"]{border-left-color:var(--begonnen)}
+.schritt[data-status="etabliert"]{border-left-color:var(--etabliert)}
+.schritt[data-status="entfaellt"]{border-left-color:var(--entfaellt);opacity:.55}
+.schritt-kopf{display:flex;align-items:flex-start;gap:10px;padding:9px 11px 7px}
+.schritt-nr{
+  flex:0 0 auto;width:23px;height:23px;border-radius:3px;background:var(--blau);
+  color:var(--weiss);font-size:11.5px;font-weight:700;display:flex;align-items:center;
+  justify-content:center;
+}
+.schritt-titel{font-size:12.5px;font-weight:700;line-height:1.35;flex:1 1 auto}
+.frageliste{margin:0;padding:2px 11px 6px 44px;list-style:none}
+.frage{
+  display:flex;gap:9px;align-items:flex-start;width:100%;text-align:left;
+  background:none;border:none;padding:5px 0;cursor:pointer;font:inherit;
+  font-size:11.5px;line-height:1.45;color:var(--text-mute);
+}
+.kasten{
+  flex:0 0 auto;width:15px;height:15px;border:1.5px solid var(--rand);
+  border-radius:3px;margin-top:1px;position:relative;background:#fff;
+}
+.frage:hover .kasten{border-color:var(--blau)}
+.frage[aria-checked="true"] .kasten{background:var(--etabliert);border-color:var(--etabliert)}
+.frage[aria-checked="true"] .kasten::after{
+  content:"✓";position:absolute;inset:0;color:#fff;font-size:11px;line-height:14px;
+  text-align:center;font-weight:700;
+}
+.frage[aria-checked="true"]{color:var(--text)}
+.zaehler{
+  margin-left:auto;font-size:11px;font-weight:700;color:var(--text-dim);
+  white-space:nowrap;
+}
+.zaehler.voll{color:var(--etabliert)}
+.zaehler.leer{color:var(--blau)}
+
+/* Auswertung je Abschnitt */
+.mini{display:flex;align-items:center;gap:8px;margin-bottom:7px}
+.mini-name{font-size:11px;color:var(--text-mute);flex:1 1 auto}
+.mini-bar{display:flex;gap:2px;flex:0 0 auto}
+.mini-bar i{width:13px;height:9px;border-radius:1px;background:#e8e8e8;display:block}
+.mini-bar i.an{background:var(--etabliert)}
+.mini.schwach .mini-name{color:var(--blau);font-weight:700}
+.band{
+  margin-top:12px;padding:9px 11px;border-radius:3px;font-size:11.5px;line-height:1.5;
+  background:var(--blau-zart);color:var(--text);
+}
+.band b{display:block;margin-bottom:3px}
+.schritt-leiste{
+  display:flex;align-items:center;gap:6px;flex-wrap:wrap;
+  padding:7px 11px 9px 44px;border-top:1px solid var(--rand-soft);
+}
+.chip{
+  font:inherit;font-size:10.5px;font-weight:700;padding:3px 9px;border-radius:11px;
+  border:1px solid var(--rand);background:var(--flaeche);color:var(--text-mute);
+  cursor:pointer;white-space:nowrap;
+}
+.chip:hover{border-color:var(--text-mute)}
+.chip[data-wert="offen"]{background:var(--rand-soft);border-color:var(--offen)}
+.chip[data-wert="begonnen"]{background:var(--begonnen);border-color:var(--begonnen);color:var(--navy)}
+.chip[data-wert="etabliert"]{background:var(--etabliert);border-color:var(--etabliert);color:var(--navy)}
+.chip[data-wert="entfaellt"]{background:var(--rand-soft);border-color:var(--entfaellt);color:var(--text-dim)}
+.chip[data-wert="jetzt"]{background:var(--blau);border-color:var(--blau);color:var(--weiss)}
+.chip[data-wert="90"]{background:var(--neunzig);border-color:var(--neunzig);color:var(--navy)}
+.chip[data-wert="spaeter"]{background:var(--rand-soft);border-color:var(--spaeter)}
+.feld{
+  font:inherit;font-size:11.5px;padding:3px 7px;border:1px solid var(--rand);
+  border-radius:3px;min-width:104px;outline:none;background:#fcfcfc;
+}
+.feld:focus{border-color:var(--blau);background:#fff}
+.feld:empty::before{content:attr(data-platzhalter);color:var(--text-dim)}
+.feld.breit{flex:1 1 190px;min-width:150px}
+
+/* ------------------------------------------------------------ Auswertung */
+.balken{height:22px;border-radius:3px;display:flex;overflow:hidden;border:1px solid var(--rand)}
+.balken span{display:block;transition:width .25s}
+.legende{display:flex;flex-wrap:wrap;gap:10px;margin-top:9px}
+.legende i{
+  display:inline-flex;align-items:center;gap:5px;font-style:normal;
+  font-size:11px;color:var(--text-mute);
+}
+.legende b{width:11px;height:11px;border-radius:2px;display:inline-block}
+.kennzahl{display:flex;align-items:baseline;gap:8px;margin:14px 0 4px}
+.kennzahl .zahl{font-size:30px;font-weight:700;color:var(--blau);line-height:1}
+.kennzahl .wort{font-size:11.5px;color:var(--text-mute);line-height:1.35}
+
+.spur{margin-bottom:12px}
+.spur:last-child{margin-bottom:0}
+.spur-kopf{
+  font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.8px;
+  padding:3px 8px;border-radius:3px;display:inline-block;margin-bottom:6px;
+}
+.spur-kopf.jetzt{background:var(--blau);color:var(--weiss)}
+.spur-kopf.n90{background:var(--neunzig);color:var(--navy)}
+.spur-kopf.spaet{background:var(--spaeter);color:var(--navy)}
+.spur ol{margin:0;padding-left:19px}
+.spur li{font-size:11.5px;line-height:1.55;margin-bottom:3px;color:var(--text-mute)}
+.spur .leer{font-size:11.5px;color:var(--text-dim);font-style:italic;padding-left:2px}
+
+/* ------------------------------------------------------------ Notizen */
+#haftschicht{position:absolute;top:0;left:0;pointer-events:none}
+.haft{
+  position:absolute;width:196px;background:#F2C14E;border:1px solid rgba(44,44,84,.18);
+  border-radius:2px;box-shadow:0 4px 12px rgba(0,0,0,.20),0 1px 2px rgba(0,0,0,.14);
+  pointer-events:auto;color:#2C2C54;display:flex;flex-direction:column;
+  font-size:12.5px;line-height:1.42;
+}
+.haft.gewaehlt{box-shadow:0 0 0 2.5px var(--blau),0 6px 16px rgba(0,0,0,.26)}
+.haft-kopf{
+  display:flex;align-items:center;gap:6px;padding:4px 5px 3px 8px;
+  cursor:grab;border-bottom:1px solid rgba(0,0,0,.10);
+}
+.haft-kopf:active{cursor:grabbing}
+.haft-griff{
+  flex:1 1 auto;height:9px;opacity:.5;border-radius:1px;
+  background:repeating-linear-gradient(180deg,rgba(0,0,0,.16) 0 1px,transparent 1px 3px);
+}
+.haft-x{
+  border:none;background:transparent;font:inherit;font-size:15px;line-height:1;
+  cursor:pointer;padding:0 3px;color:rgba(0,0,0,.45);
+}
+.haft-x:hover{color:var(--blau)}
+.haft-text{padding:7px 9px 9px;outline:none;white-space:pre-wrap;min-height:58px}
+
+.hinweis{
+  position:fixed;left:14px;bottom:12px;z-index:30;font-size:11px;color:var(--text-dim);
+  background:rgba(255,255,255,.9);border:1px solid var(--rand);border-radius:3px;
+  padding:5px 10px;pointer-events:none;
+}
+
+/* ------------------------------------------------------------ Druck */
+#druck{display:none}
+@media print{
+  header,#feld,.hinweis{display:none !important}
+  html,body{overflow:visible;background:#fff;height:auto}
+  #druck{display:block;padding:0;font-size:10.5pt}
+  #druck h1{font-size:17pt;margin:0 0 2mm}
+  #druck .sub{font-size:9pt;color:#5a6570;margin-bottom:6mm}
+  #druck h2{font-size:12pt;margin:7mm 0 2mm;border-bottom:1px solid #c4ced5;padding-bottom:1mm}
+  #druck h3{font-size:10pt;margin:4mm 0 1mm}
+  #druck .hinw{background:rgba(57,103,222,.10);color:#2C2C54;padding:2.5mm;border-radius:1mm;
+    font-size:9pt;margin-bottom:5mm}
+  #druck ul{margin:0 0 2mm;padding-left:5mm}
+  #druck li{font-size:9pt;margin-bottom:.7mm}
+  #druck table{width:100%;border-collapse:collapse;font-size:9pt}
+  #druck th{background:#3967DE;color:#fff;text-align:left;padding:2mm;font-size:8.5pt}
+  #druck td{border-bottom:1px solid #dfe5e9;padding:2mm;vertical-align:top}
+  #druck td.eng{white-space:nowrap}
+  #druck tr{break-inside:avoid}
+  #druck .fuss{margin-top:8mm;font-size:8pt;color:#93a0a9}
+}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="kopfzeile">
+    <h1>Datenprodukte: <span class="akzent">Selbst-Check</span></h1>
+  </div>
+  <div class="werkbank">
+    <span class="wb-titel">Werkstatt</span>
+    <div class="wb-farben" id="wbFarben"></div>
+    <button class="knopf" id="wbNotiz" title="Notiz in der Bildmitte anlegen (Taste N)">＋ Notiz</button>
+    <button class="knopf" id="wbNotizen" aria-pressed="true" title="Alle Notizen ein- oder ausblenden">Notizen aus</button>
+    <span class="trenner"></span>
+    <button class="knopf" id="wbZoomAn" title="Auf das ganze Board zoomen (Taste 0)">Alles zeigen</button>
+    <span class="wb-fuell"></span>
+    <span class="wb-status" id="wbStatus">Bereit</span>
+    <button class="knopf" id="wbProtokoll" title="Statusbericht als Markdown sichern">Protokoll</button>
+    <button class="knopf" id="wbDruck" title="Statusbericht drucken oder als PDF sichern">Drucken</button>
+    <button class="knopf" id="wbSichern" title="Kompletten Stand als JSON sichern">Sichern</button>
+    <button class="knopf" id="wbLaden" title="Gesicherten Stand laden">Laden</button>
+    <button class="knopf" id="wbVollbild" title="Vollbild für den Beamer (Taste F)">Vollbild</button>
+    <button class="knopf" id="wbReset" title="Alle Eingaben dieser Sitzung verwerfen">Zurücksetzen</button>
+    <input type="file" id="wbDatei" accept="application/json" hidden>
+  </div>
+</header>
+
+<div id="feld">
+  <div id="buehne">
+    <div id="rahmen"></div>
+    <div id="haftschicht"></div>
+  </div>
+</div>
+
+<div class="hinweis">Ziehen verschiebt · Mausrad zoomt · Doppelklick auf freie Fläche legt eine Notiz ab ·
+  Klick auf eine Frage setzt das Kreuz · Eingaben bleiben lokal im Browser</div>
+
+<div id="druck"></div>
+
+<script>
+"use strict";
+
+/* ================================================================== Daten
+   Inhalte wörtlich aus: gollnickdata Know-how „Datenprodukte. Selbst-Check",
+   Lukas Diener, Principal Consultant Data & Analytics Strategy, 05/2026.
+================================================================== */
+
+const DEFINITION = [
+  ["Was ein Datenprodukt ist", [
+    "Eine domänenspezifische, wiederverwendbare und klar verantwortete Einheit: " +
+    "etwa ein Domain Dataset, ein kuratierter Event Stream, ein semantisches Modell " +
+    "oder ein Prognose-Algorithmus."]],
+  ["Vier Merkmale", [
+    "Liefert einen definierten Nutzen für eine Zielgruppe",
+    "Bietet klare Schnittstellen und Verträge: Schemas, Versionen, Rollen, SLAs",
+    "Hat einen Product Owner sowie Build- &amp; Run-Verantwortung",
+    "Ist auffindbar, verständlich und verlässlich"]],
+  ["So funktioniert der Selbst-Check", [
+    "Jede Frage ankreuzen, die heute schon mit JA zu beantworten ist",
+    "Abschnitte mit wenigen Kreuzen verlangen besondere Aufmerksamkeit",
+    "Viele leere Zeilen in einem Abschnitt zeigen den größten Hebel"]]
+];
+
+const ABSCHNITTE = [
+  {nr:1, titel:"Ziel &amp; Nutzen", fragen:[
+     "Gibt es einen klar definierten fachlichen Nutzen, den das Datenprodukt unterstützt?",
+     "Sind die Konsumenten/Nutzer klar beschrieben (z. B. Systeme, Analysten, Apps)?",
+     "Gibt es messbare Erfolgskennzahlen (Outcome Metrics), nicht nur Output („Dataset verfügbar“), sondern Wirkung („Prozesszeit sinkt um X %“)?",
+     "Ist dokumentiert, welche Entscheidungen oder Aktivitäten das Datenprodukt künftig unterstützen soll?"]},
+  {nr:2, titel:"Governance &amp; Produktverantwortung", fragen:[
+     "Ist ein Product Owner für das Datenprodukt benannt und hat entsprechende Entscheidungskompetenzen?",
+     "Gibt es definierte Rollen für Development, Betrieb, Qualitätssicherung und Support?",
+     "Sind Kapazitäten und Budget für Build &amp; Run des Datenprodukts zugesichert?",
+     "Gibt es definierte Support-/Betriebszeiten (wer hilft wann/wie)?"]},
+  {nr:3, titel:"Datenquellen &amp; Vereinbarungen", fragen:[
+     "Sind alle relevanten Datenquellen und deren Owner dokumentiert?",
+     "Gibt es Data Contracts (Schema, erwartete Qualität, Refresh-Zyklus, SLAs)?",
+     "Gibt es Regeln und Prozesse für Schemaänderungen, Breaking Changes und Tests?",
+     "Sind Zugriffsrechte (Freigaben/IAM) geklärt und erteilt?"]},
+  {nr:4, titel:"Qualität &amp; Monitoring", fragen:[
+     "Sind die wichtigsten Qualitätsregeln (z. B. Vollständigkeit, Aktualität) definiert?",
+     "Werden diese automatisiert geprüft (z. B. in Pipelines/Workflows)?",
+     "Ist Monitoring &amp; Alerting bei Fehlern/Verstößen vorhanden?",
+     "Existiert ein Prozess für Korrekturen/Backfills?"]},
+  {nr:5, titel:"Auffindbarkeit &amp; Dokumentation", fragen:[
+     "Ist das Datenprodukt bereits in einem Datenkatalog auffindbar (Name, Tags, Kontakt)?",
+     "Gibt es eine verständliche Nutzerdokumentation: Was bekomme ich? Wie nutze ich es? Beispiele?",
+     "Ist eine Datenklassifizierung (z. B. intern/vertraulich) festgelegt?",
+     "Gibt es einen Feedback-Mechanismus für Nutzer?"]},
+  {nr:6, titel:"Schnittstellen &amp; Nutzung", fragen:[
+     "Welche Bereitstellungswege existieren (SQL, API, Event Streams, Files), und sind diese dokumentiert?",
+     "Gibt es eine Versionierung (Schemas, APIs) und Deprecation-Regeln?",
+     "Stehen Beispielabfragen/Clients für den schnellen Start bereit?",
+     "Sind Service-Level (z. B. Aktualität, Refresh-Frequenz, Verfügbarkeit) definiert und kommuniziert?"]},
+  {nr:7, titel:"Plattform, Betrieb &amp; Sicherheit", fragen:[
+     "Ist die Zielplattform, auf der das Datenprodukt läuft, entschieden und eingerichtet (z. B. DWH/Lakehouse)?",
+     "Sind Deployments automatisiert (z. B. CI/CD)?",
+     "Gibt es Runbooks für Betrieb &amp; Störungen?",
+     "Sind Datenschutz, Zugriffskonzepte und Audit Logs berücksichtigt?"]}
+];
+
+const BAENDER = [
+  {bis:9,  titel:"0 – 9 Kreuze",   text:"Es sind noch einige Grundlagen zu schaffen: Zielbild, Owner/Team, Katalog, Basisqualität, Zugriffe."},
+  {bis:19, titel:"10 – 19 Kreuze", text:"Sie sind schon auf einem guten Weg. Jetzt gilt es, für Standardisierung und Automatisierung zu sorgen: Schema-Versionierung, Monitoring, Beispiele, SLAs."},
+  {bis:28, titel:"20 – 28 Kreuze", text:"Sehr weit fortgeschritten. Der Fokus sollte nun auf Skalieren und Optimieren liegen: Nutzung und Outcome messen, Portfolioblick, Effizienz im Betrieb."}
+];
+
+const HORIZONT = [
+  {wert:"",        text:"Horizont –"},
+  {wert:"jetzt",   text:"Jetzt"},
+  {wert:"90",      text:"90 Tage"},
+  {wert:"spaeter", text:"Später"}
+];
+const NOTIZFARBEN = ["#F2C14E","#3967DE","#3FC79A","#7C8FE8","#dfe5e9","#ffffff"];
+
+/* ================================================================ Zustand */
+const SPEICHER = "gollnickdata-dp-board-v1";
+let zustand = {abschnitte:{}, notizen:[]};
+let notizfarbe = NOTIZFARBEN[0];
+let notizZaehler = 0;
+
+function leererAbschnitt(){ return {haken:[false,false,false,false], horizont:"", owner:"", notiz:""}; }
+ABSCHNITTE.forEach(a => zustand.abschnitte[a.nr] = leererAbschnitt());
+const FRAGEN_GESAMT = ABSCHNITTE.reduce((s,a) => s + a.fragen.length, 0);
+
+/* ================================================================== Bühne */
+const feld = document.getElementById("feld");
+const buehne = document.getElementById("buehne");
+const rahmenBox = document.getElementById("rahmen");
+const haftschicht = document.getElementById("haftschicht");
+let ansicht = {x:40, y:24, z:.72};
+
+function zeichneAnsicht(){
+  buehne.style.transform = `translate(${ansicht.x}px,${ansicht.y}px) scale(${ansicht.z})`;
+}
+
+function boardKoordinate(ev){
+  const r = feld.getBoundingClientRect();
+  return {
+    x:(ev.clientX - r.left - ansicht.x) / ansicht.z,
+    y:(ev.clientY - r.top  - ansicht.y) / ansicht.z
+  };
+}
+
+/* ------------------------------------------------------------ Rahmenbau */
+function rahmen(id, x, y, b, h, titel, zusatz){
+  const d = document.createElement("div");
+  d.className = "rahmen";
+  d.style.cssText = `left:${x}px;top:${y}px;width:${b}px;min-height:${h}px`;
+  d.innerHTML = `<div class="rahmen-kopf"><h2>${titel}</h2>` +
+                (zusatz ? `<span class="zusatz">${zusatz}</span>` : "") +
+                `</div><div class="rahmen-koerper" id="${id}"></div>`;
+  rahmenBox.appendChild(d);
+  return d.querySelector(".rahmen-koerper");
+}
+
+const BREITE_A = 560, BREITE_S = 700, BREITE_C = 560, LUECKE = 34;
+const SP_A  = 40;
+const SP_S1 = SP_A  + BREITE_A + LUECKE;
+const SP_S2 = SP_S1 + BREITE_S + LUECKE;
+const SP_C  = SP_S2 + BREITE_S + LUECKE;
+
+const koerperWarum = rahmen("fWarum", SP_A, 40, BREITE_A, 400,
+  "Worum es geht", "Definition und Anleitung");
+const koerperS1 = rahmen("fS1", SP_S1, 40, BREITE_S, 400,
+  "Abschnitte 01 – 04", "Ziel · Governance · Quellen · Qualität");
+const koerperS2 = rahmen("fS2", SP_S2, 40, BREITE_S, 400,
+  "Abschnitte 05 – 07", "Auffindbarkeit · Schnittstellen · Plattform");
+const koerperReife   = rahmen("fReife",   SP_C,  40, BREITE_C, 330,
+  "Auswertung", "aktualisiert sich automatisch");
+const koerperRoadmap = rahmen("fRoadmap", SP_C, 410, BREITE_C, 400,
+  "Roadmap", "aus den Horizont-Chips je Abschnitt");
+
+/* ------------------------------------------------------------ Definition */
+koerperWarum.innerHTML = DEFINITION.map(([t, punkte]) =>
+  `<div class="wirkung"><h3>${t}</h3><ul>${punkte.map(p=>`<li>${p}</li>`).join("")}</ul></div>`
+).join("");
+
+/* ------------------------------------------------------------ Abschnitte */
+function karte(a){
+  const z = zustand.abschnitte[a.nr];
+  const gesetzt = z.haken.filter(Boolean).length;
+  return `<div class="schritt" data-nr="${a.nr}" data-status="${lage(gesetzt, a.fragen.length)}">
+    <div class="schritt-kopf">
+      <span class="schritt-nr">${String(a.nr).padStart(2,"0")}</span>
+      <span class="schritt-titel">${a.titel}</span>
+      <span class="zaehler js-zaehler"></span>
+    </div>
+    <ul class="frageliste">${a.fragen.map((f,i) =>
+      `<li><button class="frage js-frage" data-i="${i}" aria-checked="${z.haken[i]}">
+         <span class="kasten"></span><span class="ftext">${f}</span></button></li>`).join("")}</ul>
+    <div class="schritt-leiste">
+      <button class="chip js-horizont" data-wert="${z.horizont}"></button>
+      <span class="feld js-owner" contenteditable="true" role="textbox"
+            data-platzhalter="Verantwortlich (Person)"></span>
+      <span class="feld breit js-notiz" contenteditable="true" role="textbox"
+            data-platzhalter="Maßnahme, nächster Schritt"></span>
+    </div>
+  </div>`;
+}
+
+/* Faerbt den linken Rand der Karte nach Erfuellungsgrad, dieselben Farben
+   wie die Statusstufen der anderen Boards, damit alle drei gleich wirken. */
+function lage(gesetzt, gesamt){
+  if(gesetzt === 0) return "offen";
+  if(gesetzt >= gesamt) return "etabliert";
+  return "begonnen";
+}
+
+function baueAbschnitte(){
+  koerperS1.innerHTML = ABSCHNITTE.filter(a => a.nr <= 4).map(karte).join("");
+  koerperS2.innerHTML = ABSCHNITTE.filter(a => a.nr >  4).map(karte).join("");
+  document.querySelectorAll(".schritt").forEach(el => {
+    const z = zustand.abschnitte[+el.dataset.nr];
+    el.querySelector(".js-owner").textContent = z.owner;
+    el.querySelector(".js-notiz").textContent = z.notiz;
+    frischeKarte(el);
+  });
+}
+
+function frischeKarte(el){
+  const nr = +el.dataset.nr;
+  const a = ABSCHNITTE.find(x => x.nr === nr), z = zustand.abschnitte[nr];
+  const gesetzt = z.haken.filter(Boolean).length;
+  el.querySelectorAll(".js-frage").forEach(b =>
+    b.setAttribute("aria-checked", String(!!z.haken[+b.dataset.i])));
+  const zae = el.querySelector(".js-zaehler");
+  zae.textContent = `${gesetzt} / ${a.fragen.length}`;
+  zae.className = "zaehler js-zaehler" +
+    (gesetzt >= a.fragen.length ? " voll" : gesetzt === 0 ? " leer" : "");
+  const ch = el.querySelector(".js-horizont");
+  ch.dataset.wert = z.horizont;
+  ch.textContent = HORIZONT.find(h => h.wert === z.horizont).text;
+  el.dataset.status = lage(gesetzt, a.fragen.length);
+}
+
+rahmenBox.addEventListener("click", ev => {
+  const el = ev.target.closest(".schritt");
+  if(!el) return;
+  const z = zustand.abschnitte[+el.dataset.nr];
+  const frage = ev.target.closest(".js-frage");
+  if(frage){
+    const i = +frage.dataset.i;
+    z.haken[i] = !z.haken[i];
+  }else if(ev.target.closest(".js-horizont")){
+    const i = HORIZONT.findIndex(h => h.wert === z.horizont);
+    z.horizont = HORIZONT[(i + 1) % HORIZONT.length].wert;
+  }else return;
+  frischeKarte(el);
+  aktualisiere();
+});
+
+rahmenBox.addEventListener("input", ev => {
+  const el = ev.target.closest(".schritt");
+  if(!el) return;
+  const z = zustand.abschnitte[+el.dataset.nr];
+  if(ev.target.classList.contains("js-owner")) z.owner = ev.target.textContent.trim();
+  if(ev.target.classList.contains("js-notiz")) z.notiz = ev.target.textContent.trim();
+  merke();
+});
+rahmenBox.addEventListener("pointerdown", ev => {
+  if(ev.target.closest(".feld")) ev.stopPropagation();
+});
+
+/* ------------------------------------------------------------ Auswertung */
+function summe(){ return ABSCHNITTE.reduce((s,a) =>
+  s + zustand.abschnitte[a.nr].haken.filter(Boolean).length, 0); }
+
+function band(){ return BAENDER.find(b => summe() <= b.bis) || BAENDER[BAENDER.length-1]; }
+
+function aktualisiere(){
+  const gesamt = summe(), b = band();
+  const werte = ABSCHNITTE.map(a => zustand.abschnitte[a.nr].haken.filter(Boolean).length);
+  const schwaechste = Math.min(...werte);
+  /* Solange alle Abschnitte gleich stehen (etwa zu Beginn) waere jede Zeile
+     "am schwaechsten", dann gar nichts hervorheben. */
+  const spreizung = Math.max(...werte) > schwaechste;
+
+  koerperReife.innerHTML =
+    `<div class="kennzahl" style="margin-top:0">
+       <span class="zahl">${gesamt} / ${FRAGEN_GESAMT}</span>
+       <span class="wort">Fragen heute mit Ja zu beantworten</span></div>
+     <div style="margin-top:13px">` +
+    ABSCHNITTE.map((a,i) =>
+      `<div class="mini${spreizung && werte[i] === schwaechste ? " schwach" : ""}">
+         <span class="mini-name">${String(a.nr).padStart(2,"0")} ${a.titel}</span>
+         <span class="mini-bar">` +
+         a.fragen.map((_,j) => `<i class="${j < werte[i] ? "an" : ""}"></i>`).join("") +
+       `</span></div>`).join("") +
+    `</div>
+     <div class="band"><b>${b.titel}</b>${b.text}</div>
+     <div style="margin-top:9px;font-size:11px;color:var(--text-dim);line-height:1.5">
+       Viele leere Zeilen in einem Abschnitt zeigen den größten Hebel, rot markiert.</div>`;
+
+  const spuren = [["jetzt","Jetzt","jetzt"],["90","Nächste 90 Tage","n90"],["spaeter","Später","spaet"]];
+  koerperRoadmap.innerHTML = spuren.map(([wert, beschriftung, klasse]) => {
+    const drin = ABSCHNITTE.filter(a => zustand.abschnitte[a.nr].horizont === wert);
+    return `<div class="spur"><span class="spur-kopf ${klasse}">${beschriftung} · ${drin.length}</span>` +
+      (drin.length
+        ? `<ol>${drin.map(a => {
+             const z = zustand.abschnitte[a.nr];
+             const offen = a.fragen.length - z.haken.filter(Boolean).length;
+             return `<li><b>${String(a.nr).padStart(2,"0")}</b> ${a.titel}` +
+                    ` <span style="color:#9a9a9a">(${offen} offen)</span>` +
+                    (z.owner ? ` · <span style="color:#2C2C54;font-weight:700">${z.owner}</span>` : "") + `</li>`;
+           }).join("")}</ol>`
+        : `<div class="leer">noch nichts zugeordnet</div>`) + `</div>`;
+  }).join("");
+
+  merke();
+}
+
+/* ================================================================ Notizen */
+function neueNotiz(x, y, text, farbe, id){
+  const n = {id: id || ("n" + (++notizZaehler) + "-" + Date.now().toString(36)),
+             x, y, text: text || "", farbe: farbe || notizfarbe};
+  if(!zustand.notizen.some(v => v.id === n.id)) zustand.notizen.push(n);
+  zeichneNotiz(n);
+  merke();
+  return n;
+}
+
+function zeichneNotiz(n){
+  const d = document.createElement("div");
+  d.className = "haft";
+  d.dataset.id = n.id;
+  d.style.cssText = `left:${n.x}px;top:${n.y}px;background:${n.farbe}`;
+  d.innerHTML = `<div class="haft-kopf"><span class="haft-griff"></span>
+                 <button class="haft-x" title="Notiz entfernen">×</button></div>
+                 <div class="haft-text" contenteditable="true"></div>`;
+  d.querySelector(".haft-text").textContent = n.text;
+  haftschicht.appendChild(d);
+
+  d.querySelector(".haft-text").addEventListener("input", e => {
+    n.text = e.target.textContent; merke();
+  });
+  d.querySelector(".haft-x").addEventListener("click", () => {
+    zustand.notizen = zustand.notizen.filter(v => v.id !== n.id);
+    d.remove(); merke(); status("Notiz entfernt");
+  });
+
+  const kopf = d.querySelector(".haft-kopf");
+  kopf.addEventListener("pointerdown", ev => {
+    if(ev.target.classList.contains("haft-x")) return;
+    ev.stopPropagation(); ev.preventDefault();
+    kopf.setPointerCapture(ev.pointerId);
+    const start = boardKoordinate(ev), ox = n.x, oy = n.y;
+    d.classList.add("gewaehlt");
+    const zieh = e => {
+      const jetzt = boardKoordinate(e);
+      n.x = ox + (jetzt.x - start.x); n.y = oy + (jetzt.y - start.y);
+      d.style.left = n.x + "px"; d.style.top = n.y + "px";
+    };
+    const los = () => {
+      kopf.removeEventListener("pointermove", zieh);
+      kopf.removeEventListener("pointerup", los);
+      d.classList.remove("gewaehlt"); merke();
+    };
+    kopf.addEventListener("pointermove", zieh);
+    kopf.addEventListener("pointerup", los);
+  });
+  /* Schreiben in der Notiz darf die Bühne nicht verschieben */
+  d.addEventListener("pointerdown", ev => ev.stopPropagation());
+}
+
+/* ============================================================ Interaktion */
+feld.addEventListener("pointerdown", ev => {
+  if(ev.button !== 0) return;
+  /* Drueckt man auf eine Karte (Frage ankreuzen, Chip schalten, Feld tippen),
+     darf die Buehne den Zeiger nicht einfangen: setPointerCapture wuerde den
+     folgenden Klick auf #feld umlenken, und der Karten-Listener (ein Kind von
+     #feld) saehe ihn nie. Geschoben wird nur auf der freien Rasterflaeche. */
+  if(ev.target.closest(".rahmen")) return;
+  feld.classList.add("zieht");
+  feld.setPointerCapture(ev.pointerId);
+  const sx = ev.clientX, sy = ev.clientY, ax = ansicht.x, ay = ansicht.y;
+  const zieh = e => { ansicht.x = ax + (e.clientX - sx); ansicht.y = ay + (e.clientY - sy); zeichneAnsicht(); };
+  const los = () => {
+    feld.classList.remove("zieht");
+    feld.removeEventListener("pointermove", zieh);
+    feld.removeEventListener("pointerup", los);
+  };
+  feld.addEventListener("pointermove", zieh);
+  feld.addEventListener("pointerup", los);
+});
+
+feld.addEventListener("wheel", ev => {
+  ev.preventDefault();
+  const r = feld.getBoundingClientRect();
+  const mx = ev.clientX - r.left, my = ev.clientY - r.top;
+  const neu = Math.min(2.4, Math.max(.18, ansicht.z * (ev.deltaY < 0 ? 1.12 : 1/1.12)));
+  ansicht.x = mx - (mx - ansicht.x) * (neu / ansicht.z);
+  ansicht.y = my - (my - ansicht.y) * (neu / ansicht.z);
+  ansicht.z = neu; zeichneAnsicht();
+}, {passive:false});
+
+feld.addEventListener("dblclick", ev => {
+  if(ev.target.closest(".rahmen") || ev.target.closest(".haft")) return;
+  const p = boardKoordinate(ev);
+  neueNotiz(p.x - 98, p.y - 40);
+  status("Notiz abgelegt");
+});
+
+function allesZeigen(){
+  const kaesten = [...rahmenBox.children];
+  if(!kaesten.length) return;
+  let x1 = 1e9, y1 = 1e9, x2 = -1e9, y2 = -1e9;
+  kaesten.forEach(k => {
+    x1 = Math.min(x1, k.offsetLeft); y1 = Math.min(y1, k.offsetTop);
+    x2 = Math.max(x2, k.offsetLeft + k.offsetWidth);
+    y2 = Math.max(y2, k.offsetTop + k.offsetHeight);
+  });
+  zustand.notizen.forEach(n => {
+    x1 = Math.min(x1, n.x); y1 = Math.min(y1, n.y);
+    x2 = Math.max(x2, n.x + 196); y2 = Math.max(y2, n.y + 120);
+  });
+  const rand = 28;
+  const bb = feld.clientWidth - rand*2, bh = feld.clientHeight - rand*2;
+  /* Breite einpassen. Ist das Board hoeher als der Schirm, oben ausrichten: Text bleibt so lesbar, statt auf Briefmarkengroesse zu schrumpfen. */
+  const zBreite = bb / (x2 - x1), zHoehe = bh / (y2 - y1);
+  ansicht.z = Math.min(1.4, Math.max(.15, zHoehe >= zBreite ? zBreite : zBreite));
+  ansicht.x = rand + (bb - (x2-x1)*ansicht.z)/2 - x1*ansicht.z;
+  ansicht.y = (y2-y1)*ansicht.z <= bh
+    ? rand + (bh - (y2-y1)*ansicht.z)/2 - y1*ansicht.z
+    : rand - y1*ansicht.z;
+  zeichneAnsicht();
+}
+
+/* ============================================================== Werkbank */
+function status(t){
+  const s = document.getElementById("wbStatus");
+  s.textContent = t;
+  clearTimeout(status._u);
+  status._u = setTimeout(() => s.textContent = "Bereit", 2600);
+}
+
+const farbBox = document.getElementById("wbFarben");
+NOTIZFARBEN.forEach((f, i) => {
+  const b = document.createElement("button");
+  b.className = "farbtupfer"; b.style.background = f;
+  b.setAttribute("aria-pressed", String(i === 0));
+  b.title = "Farbe für neue Notizen";
+  b.addEventListener("click", () => {
+    notizfarbe = f;
+    [...farbBox.children].forEach(c => c.setAttribute("aria-pressed", String(c === b)));
+  });
+  farbBox.appendChild(b);
+});
+
+document.getElementById("wbNotiz").addEventListener("click", () => {
+  const p = {x:(feld.clientWidth/2 - ansicht.x)/ansicht.z, y:(feld.clientHeight/2 - ansicht.y)/ansicht.z};
+  neueNotiz(p.x - 98, p.y - 40);
+  status("Notiz angelegt");
+});
+
+document.getElementById("wbNotizen").addEventListener("click", e => {
+  const an = e.currentTarget.getAttribute("aria-pressed") === "true";
+  haftschicht.style.display = an ? "none" : "";
+  e.currentTarget.setAttribute("aria-pressed", String(!an));
+  e.currentTarget.textContent = an ? "Notizen ein" : "Notizen aus";
+});
+
+document.getElementById("wbZoomAn").addEventListener("click", allesZeigen);
+
+document.getElementById("wbVollbild").addEventListener("click", () => {
+  if(document.fullscreenElement) document.exitFullscreen();
+  else document.documentElement.requestFullscreen?.();
+});
+
+document.getElementById("wbReset").addEventListener("click", () => {
+  if(!confirm("Alle Statusangaben, Verantwortlichen und Notizen dieser Sitzung verwerfen?")) return;
+  ABSCHNITTE.forEach(a => zustand.abschnitte[a.nr] = leererAbschnitt());
+  zustand.notizen = [];
+  haftschicht.innerHTML = "";
+  baueAbschnitte(); aktualisiere();
+  status("Zurückgesetzt");
+});
+
+/* ------------------------------------------------------ Sichern / Laden */
+function lade(name, inhalt, typ){
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(new Blob([inhalt], {type:typ}));
+  a.download = name; a.click();
+  setTimeout(() => URL.revokeObjectURL(a.href), 4000);
+}
+const stempel = () => new Date().toISOString().slice(0,10).replace(/-/g,"");
+
+document.getElementById("wbSichern").addEventListener("click", () => {
+  lade(`Datenprodukte_Selbstcheck_${stempel()}.json`,
+       JSON.stringify(zustand, null, 2), "application/json");
+  status("Stand gesichert");
+});
+
+document.getElementById("wbLaden").addEventListener("click", () =>
+  document.getElementById("wbDatei").click());
+
+document.getElementById("wbDatei").addEventListener("change", ev => {
+  const f = ev.target.files[0];
+  if(!f) return;
+  const r = new FileReader();
+  r.onload = () => {
+    try{
+      const neu = JSON.parse(r.result);
+      if(!neu || !neu.abschnitte) throw new Error("kein Board-Stand");
+      ABSCHNITTE.forEach(a =>
+        zustand.abschnitte[a.nr] = Object.assign(leererAbschnitt(), neu.abschnitte[a.nr] || {}));
+      zustand.notizen = Array.isArray(neu.notizen) ? neu.notizen : [];
+      haftschicht.innerHTML = "";
+      zustand.notizen.forEach(zeichneNotiz);
+      baueAbschnitte(); aktualisiere();
+      status("Stand geladen");
+    }catch(e){ alert("Datei konnte nicht gelesen werden: " + e.message); }
+  };
+  r.readAsText(f);
+  ev.target.value = "";
+});
+
+/* ------------------------------------------------------------ Protokoll */
+function protokollText(){
+  const heute = new Date().toLocaleDateString("de-DE");
+  const gesamt = summe(), b = band();
+
+  let t = `# Datenprodukte: Selbst-Check\n\n`;
+  t += `**Grundlage:** gollnickdata Know-how „Datenprodukte. Selbst-Check", Lukas Diener, 05/2026\n`;
+  t += `**Erhoben am:** ${heute}\n`;
+  t += `**Ergebnis:** ${gesamt} von ${FRAGEN_GESAMT} Fragen mit Ja, ${b.titel}\n\n`;
+  t += `> ${b.text}\n\n`;
+  t += `| Abschnitt | Ja | Horizont | Verantwortlich | Maßnahme |\n|---|---|---|---|---|\n`;
+  ABSCHNITTE.forEach(a => {
+    const z = zustand.abschnitte[a.nr];
+    const ja = z.haken.filter(Boolean).length;
+    const ho = HORIZONT.find(x => x.wert === z.horizont).text.replace("Horizont –", "–");
+    t += `| ${String(a.nr).padStart(2,"0")} ${entkerne(a.titel)} | ${ja}/${a.fragen.length} `;
+    t += `| ${ho} | ${z.owner || "–"} | ${(z.notiz || "–").replace(/\|/g,"\\|")} |\n`;
+  });
+
+  t += `\n## Offene Fragen, hier liegt die Arbeit\n`;
+  ABSCHNITTE.forEach(a => {
+    const z = zustand.abschnitte[a.nr];
+    const offen = a.fragen.filter((_,i) => !z.haken[i]);
+    if(!offen.length) return;
+    t += `\n**${String(a.nr).padStart(2,"0")} ${entkerne(a.titel)}** (${offen.length} offen`;
+    t += z.owner ? `, ${z.owner})\n` : `, Verantwortlicher offen)\n`;
+    offen.forEach(f => t += `- ${entkerne(f)}\n`);
+  });
+
+  [["jetzt","Jetzt"],["90","Nächste 90 Tage"],["spaeter","Später"]].forEach(([w, bez]) => {
+    const drin = ABSCHNITTE.filter(a => zustand.abschnitte[a.nr].horizont === w);
+    if(!drin.length) return;
+    t += `\n## Roadmap: ${bez}\n\n`;
+    drin.forEach(a => {
+      const z = zustand.abschnitte[a.nr];
+      const offen = a.fragen.length - z.haken.filter(Boolean).length;
+      t += `- **${String(a.nr).padStart(2,"0")} ${entkerne(a.titel)}**: ${offen} offen`;
+      t += z.owner ? ` · ${z.owner}\n` : `: *Verantwortlicher offen*\n`;
+    });
+  });
+
+  if(zustand.notizen.length){
+    t += `\n## Notizen vom Board\n\n`;
+    zustand.notizen.forEach(n => { if(n.text.trim()) t += `- ${n.text.trim().replace(/\n/g," ")}\n`; });
+  }
+  return t;
+}
+
+/* Die Checklistentexte tragen HTML-Entitaeten (&amp;), fuer Markdown und
+   Klartext werden sie zurueckgewandelt. */
+function entkerne(s){
+  const d = document.createElement("textarea");
+  d.innerHTML = s;
+  return d.value;
+}
+
+document.getElementById("wbProtokoll").addEventListener("click", () => {
+  lade(`Datenprodukte_Selbstcheck_${stempel()}.md`, protokollText(), "text/markdown");
+  status("Protokoll gesichert");
+});
+
+/* --------------------------------------------------------------- Druck */
+function baueDruck(){
+  const heute = new Date().toLocaleDateString("de-DE");
+  const gesamt = summe(), b = band();
+
+  let h = `<h1>Datenprodukte: Selbst-Check</h1>
+    <div class="sub">gollnickdata Know-how „Datenprodukte. Selbst-Check“, Lukas Diener, 05/2026 ·
+      erhoben am ${heute} · ${gesamt} von ${FRAGEN_GESAMT} Fragen mit Ja, ${b.titel}</div>
+    <div class="hinw">${b.text}</div>
+    <table><thead><tr><th style="width:26%">Abschnitt</th><th style="width:7%">Ja</th>
+      <th style="width:12%">Horizont</th><th style="width:18%">Verantwortlich</th>
+      <th>Maßnahme</th></tr></thead><tbody>`;
+  ABSCHNITTE.forEach(a => {
+    const z = zustand.abschnitte[a.nr];
+    const ja = z.haken.filter(Boolean).length;
+    h += `<tr><td>${String(a.nr).padStart(2,"0")} ${a.titel}</td>
+      <td class="eng">${ja} / ${a.fragen.length}</td>
+      <td class="eng">${HORIZONT.find(x=>x.wert===z.horizont).text.replace("Horizont –","–")}</td>
+      <td>${z.owner || "–"}</td><td>${z.notiz || "–"}</td></tr>`;
+  });
+  h += `</tbody></table>`;
+
+  h += `<h2>Offene Fragen</h2>`;
+  let offenGesamt = 0;
+  ABSCHNITTE.forEach(a => {
+    const z = zustand.abschnitte[a.nr];
+    const offen = a.fragen.filter((_,i) => !z.haken[i]);
+    if(!offen.length) return;
+    offenGesamt += offen.length;
+    h += `<h3>${String(a.nr).padStart(2,"0")} ${a.titel}</h3><ul>` +
+         offen.map(f => `<li>${f}</li>`).join("") + `</ul>`;
+  });
+  if(!offenGesamt) h += `<p>Keine. Alle Fragen sind mit Ja beantwortet.</p>`;
+
+  const notizen = zustand.notizen.filter(n => n.text.trim());
+  if(notizen.length){
+    h += `<h2>Notizen vom Board</h2><ul>` +
+         notizen.map(n => `<li>${n.text.trim()}</li>`).join("") + `</ul>`;
+  }
+  h += `<div class="fuss">Die 28 Fragen in sieben Abschnitten sind wörtlich der gollnickdata-Checkliste
+        entnommen. Kreuze, Horizont, Verantwortliche und Maßnahmen wurden im Workshop erhoben.</div>`;
+  document.getElementById("druck").innerHTML = h;
+}
+window.addEventListener("beforeprint", baueDruck);
+document.getElementById("wbDruck").addEventListener("click", () => { baueDruck(); window.print(); });
+
+/* ------------------------------------------------------------ Tastatur */
+document.addEventListener("keydown", ev => {
+  if(ev.target.isContentEditable || /input|textarea/i.test(ev.target.tagName)) return;
+  if(ev.key === "n" || ev.key === "N") document.getElementById("wbNotiz").click();
+  if(ev.key === "0") allesZeigen();
+  if(ev.key === "f" || ev.key === "F") document.getElementById("wbVollbild").click();
+});
+
+/* ------------------------------------------------- örtliche Sicherung */
+function merke(){
+  try{ localStorage.setItem(SPEICHER, JSON.stringify(zustand)); }catch(e){/* privater Modus */}
+}
+function hole(){
+  try{
+    const roh = localStorage.getItem(SPEICHER);
+    if(!roh) return false;
+    const neu = JSON.parse(roh);
+    if(!neu || !neu.abschnitte) return false;
+    ABSCHNITTE.forEach(a =>
+      zustand.abschnitte[a.nr] = Object.assign(leererAbschnitt(), neu.abschnitte[a.nr] || {}));
+    zustand.notizen = Array.isArray(neu.notizen) ? neu.notizen : [];
+    return true;
+  }catch(e){ return false; }
+}
+
+/* =================================================================== Start */
+const wiederhergestellt = hole();
+baueAbschnitte();
+zustand.notizen.forEach(zeichneNotiz);
+aktualisiere();
+zeichneAnsicht();
+requestAnimationFrame(() => {
+  allesZeigen();
+  if(wiederhergestellt) status("Vorheriger Stand wiederhergestellt");
+});
+</script>
+</body>
+</html>
